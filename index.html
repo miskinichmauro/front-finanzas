@@ -45,7 +45,14 @@
         display: none;
         margin-top: 15px;
         color: green;
-        font-size: 18px;
+        font-size: 16px;
+    }
+
+    .loading {
+        display: none;
+        margin-top: 15px;
+        color: #007bff;
+        font-size: 14px;
     }
 </style>
 </head>
@@ -60,6 +67,7 @@
         <button type="submit">Convertir y Descargar</button>
     </form>
 
+    <div class="loading" id="loadingText">Procesando...</div>
     <div class="check" id="checkIcon">✔ Archivo convertido correctamente</div>
 </div>
 
@@ -67,6 +75,24 @@
 const form = document.getElementById('uploadForm');
 const fileInput = document.getElementById('fileInput');
 const checkIcon = document.getElementById('checkIcon');
+const loadingText = document.getElementById('loadingText');
+
+// Función para obtener nombre real del archivo desde Content-Disposition
+function getFileNameFromDisposition(disposition) {
+    let filename = "resultado.xlsx"; // fallback
+    if (!disposition) return filename;
+
+    // Intenta primero filename* (UTF-8)
+    const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/);
+    if (utf8Match && utf8Match[1]) {
+        filename = decodeURIComponent(utf8Match[1]);
+    } else {
+        // Intenta con filename normal
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) filename = match[1];
+    }
+    return filename;
+}
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -80,21 +106,22 @@ form.addEventListener('submit', async (e) => {
     formData.append('File', fileInput.files[0]);
 
     try {
+        // Mostrar indicador de carga
+        loadingText.style.display = 'block';
+        checkIcon.style.display = 'none';
+
         const response = await fetch('https://api-finanzas-6pji.onrender.com/xml-to-excel', {
             method: 'POST',
             body: formData
         });
 
-        console.log(response);
+        if (!response.ok) throw new Error('Error al convertir el XML');
+
         const blob = await response.blob();
 
-        // Obtener el nombre real del archivo desde el header Content-Disposition
-        let filename = 'resultado.xlsx';
+        // Obtener el nombre real del archivo
         const disposition = response.headers.get('Content-Disposition');
-        if (disposition && disposition.includes('filename=')) {
-            const match = disposition.match(/filename="?(.+)"?/);
-            if (match.length > 1) filename = match[1];
-        }
+        const filename = getFileNameFromDisposition(disposition);
 
         const url = window.URL.createObjectURL(blob);
 
@@ -111,11 +138,13 @@ form.addEventListener('submit', async (e) => {
         fileInput.value = '';
 
         // Mostrar check temporal
+        loadingText.style.display = 'none';
         checkIcon.style.display = 'block';
         setTimeout(() => checkIcon.style.display = 'none', 3000);
 
     } catch (err) {
         console.error(err);
+        loadingText.style.display = 'none';
         alert('Hubo un error al procesar el archivo.');
     }
 });
