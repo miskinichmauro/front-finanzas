@@ -1,45 +1,67 @@
-<mat-sidenav-container class="h-screen">
-  <mat-sidenav
-    #sidenav
-    [mode]="isHandset() ? 'over' : 'side'"
-    [opened]="!isHandset()"
-    class="w-64"
-  >
-    <div class="p-4 bg-indigo-700 text-white">
-      <h2 class="text-xl font-bold">Finanzas</h2>
+<mat-sidenav-container class="app-container">
+
+  <!-- ── SIDEBAR ── -->
+  <mat-sidenav #sidenav [mode]="isHandset() ? 'over' : 'side'" [opened]="!isHandset()" class="app-sidenav">
+
+    <!-- Logo -->
+    <div class="sidenav-logo">
+      <div class="logo-icon">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+      <div class="logo-text">
+        <span class="logo-title">Finanzas</span>
+        <span class="logo-sub">Panel personal</span>
+      </div>
     </div>
-    <mat-nav-list class="pt-0">
+
+    <!-- Nav groups -->
+    <nav class="sidenav-nav">
       @for (group of navGroups; track group.label) {
-        <div class="px-3 py-2 mt-2">
-          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ group.label }}</span>
+        <div class="nav-group">
+          <span class="nav-group-label">{{ group.label }}</span>
+          @for (item of group.items; track item.route) {
+            <a
+              class="nav-item"
+              [routerLink]="item.route"
+              routerLinkActive="nav-item--active"
+              (click)="isHandset() && sidenav.close()"
+            >
+              <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          }
         </div>
-        @for (item of group.items; track item.route) {
-          <a
-            mat-list-item
-            [routerLink]="item.route"
-            routerLinkActive="active-nav-item"
-            class="nav-item"
-          >
-            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-            <span matListItemTitle>{{ item.label }}</span>
-          </a>
-        }
       }
-    </mat-nav-list>
+    </nav>
+
+    <!-- Footer -->
+    <div class="sidenav-footer">
+      <mat-icon class="text-slate-500 text-sm">info</mat-icon>
+      <span class="text-slate-500 text-xs">v1.0.0</span>
+    </div>
   </mat-sidenav>
 
-  <mat-sidenav-content>
-    <mat-toolbar color="primary" class="sticky top-0 z-10">
+  <!-- ── CONTENT ── -->
+  <mat-sidenav-content class="app-content">
+
+    <!-- Top bar -->
+    <header class="app-topbar">
       @if (isHandset()) {
-        <button mat-icon-button (click)="toggleSidenav()" aria-label="Toggle sidenav">
+        <button mat-icon-button (click)="sidenav.toggle()" class="menu-btn">
           <mat-icon>menu</mat-icon>
         </button>
       }
-      <span class="text-lg font-semibold">Finanzas</span>
-    </mat-toolbar>
+      <div class="topbar-title">{{ currentPageTitle() }}</div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-avatar">
+        <mat-icon>person</mat-icon>
+      </div>
+    </header>
 
-    <main class="p-6">
+    <!-- Page content -->
+    <main class="app-main">
       <router-outlet />
     </main>
+
   </mat-sidenav-content>
 </mat-sidenav-container>
