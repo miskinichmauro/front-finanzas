@@ -1,0 +1,60 @@
+import { Routes } from '@angular/router';
+import { MainLayoutComponent } from './layout/main-layout.component';
+
+export const routes: Routes = [
+  {
+    path: '',
+    component: MainLayoutComponent,
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
+      },
+      {
+        path: 'usuarios',
+        loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent)
+      },
+      {
+        path: 'categorias',
+        loadComponent: () => import('./features/categories/categories.component').then(m => m.CategoriesComponent)
+      },
+      {
+        path: 'comercios',
+        loadComponent: () => import('./features/commerces/commerces.component').then(m => m.CommercesComponent)
+      },
+      {
+        path: 'medios-de-pago',
+        loadComponent: () => import('./features/payment-methods/payment-methods.component').then(m => m.PaymentMethodsComponent)
+      },
+      {
+        path: 'gastos-fijos',
+        loadComponent: () => import('./features/fixed-expenses/fixed-expenses.component').then(m => m.FixedExpensesComponent)
+      },
+      {
+        path: 'ingresos',
+        loadComponent: () => import('./features/incomes/incomes.component').then(m => m.IncomesComponent)
+      },
+      {
+        path: 'gastos-periodo',
+        loadComponent: () => import('./features/period-expenses/period-expenses.component').then(m => m.PeriodExpensesComponent)
+      },
+      {
+        path: 'transacciones',
+        loadComponent: () => import('./features/transactions/transactions.component').then(m => m.TransactionsComponent)
+      },
+      {
+        path: 'grupos-reparto',
+        loadComponent: () => import('./features/sharing-groups/sharing-groups.component').then(m => m.SharingGroupsComponent)
+      },
+      {
+        path: 'compromisos-compartidos',
+        loadComponent: () => import('./features/shared-commitments/shared-commitments.component').then(m => m.SharedCommitmentsComponent)
+      },
+      {
+        path: 'calculadora-reparto',
+        loadComponent: () => import('./features/split-calculator/split-calculator.component').then(m => m.SplitCalculatorComponent)
+      }
+    ]
+  }
+];

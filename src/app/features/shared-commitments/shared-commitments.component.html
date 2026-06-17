@@ -1,0 +1,65 @@
+<app-page-header title="Compromisos Compartidos" subtitle="Gastos y compromisos del grupo de reparto" />
+
+<div class="flex flex-wrap gap-4 items-center mb-4">
+  <mat-form-field appearance="outline" class="w-64">
+    <mat-label>Grupo de Reparto</mat-label>
+    <mat-select [(ngModel)]="selectedGroupId" (selectionChange)="loadData()">
+      <mat-option value="">Todos los grupos</mat-option>
+      @for (g of sharingGroups; track g.id) {
+        <mat-option [value]="g.id">{{ g.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <div class="flex-1"></div>
+  <button mat-flat-button color="primary" (click)="openCreate()">
+    <mat-icon>add</mat-icon> Nuevo Compromiso
+  </button>
+</div>
+
+@if (loading()) {
+  <div class="flex justify-center py-12"><mat-spinner /></div>
+} @else {
+  <div class="mat-elevation-z2 rounded-lg overflow-hidden">
+    <table mat-table [dataSource]="dataSource" matSort>
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Descripción</th>
+        <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="section">
+        <th mat-header-cell *matHeaderCellDef>Sección</th>
+        <td mat-cell *matCellDef="let row"><mat-chip>{{ row.section }}</mat-chip></td>
+      </ng-container>
+
+      <ng-container matColumnDef="groupName">
+        <th mat-header-cell *matHeaderCellDef>Grupo</th>
+        <td mat-cell *matCellDef="let row">{{ getGroupName(row.sharingGroupId) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="amount">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto</th>
+        <td mat-cell *matCellDef="let row" class="text-right">Gs. {{ formatAmount(row.amount) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="isActive">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let row">
+          <mat-chip>{{ row.isActive ? 'Activo' : 'Inactivo' }}</mat-chip>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button color="primary" (click)="openEdit(row)"><mat-icon>edit</mat-icon></button>
+          <button mat-icon-button color="warn" (click)="openDelete(row)"><mat-icon>delete</mat-icon></button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+    <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons />
+  </div>
+}

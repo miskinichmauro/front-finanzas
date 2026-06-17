@@ -1,0 +1,48 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar Ingreso' : 'Nuevo Ingreso' }}</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" class="flex flex-col gap-4 pt-2 min-w-96">
+    <mat-form-field appearance="outline">
+      <mat-label>Usuario</mat-label>
+      <mat-select formControlName="userId">
+        @for (u of users; track u.id) {
+          <mat-option [value]="u.id">{{ u.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Categoría (opcional)</mat-label>
+      <mat-select formControlName="categoryId">
+        <mat-option [value]="null">Sin categoría</mat-option>
+        @for (c of categories; track c.id) {
+          <mat-option [value]="c.id">{{ c.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Descripción</mat-label>
+      <input matInput formControlName="description" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Monto (Gs.)</mat-label>
+      <input matInput type="number" formControlName="amount" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Fecha</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="date" />
+      <mat-datepicker-toggle matIconSuffix [for]="picker" />
+      <mat-datepicker #picker />
+    </mat-form-field>
+
+    <mat-checkbox formControlName="isRecurring">Recurrente</mat-checkbox>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+    Guardar
+  </button>
+</mat-dialog-actions>

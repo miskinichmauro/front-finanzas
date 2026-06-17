@@ -1,0 +1,45 @@
+<mat-sidenav-container class="h-screen">
+  <mat-sidenav
+    #sidenav
+    [mode]="isHandset() ? 'over' : 'side'"
+    [opened]="!isHandset()"
+    class="w-64"
+  >
+    <div class="p-4 bg-primary-600 text-white">
+      <h2 class="text-xl font-bold">Finanzas</h2>
+    </div>
+    <mat-nav-list class="pt-0">
+      @for (group of navGroups; track group.label) {
+        <div class="px-3 py-2 mt-2">
+          <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">{{ group.label }}</span>
+        </div>
+        @for (item of group.items; track item.route) {
+          <a
+            mat-list-item
+            [routerLink]="item.route"
+            routerLinkActive="active-nav-item"
+            class="nav-item"
+          >
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle>{{ item.label }}</span>
+          </a>
+        }
+      }
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar color="primary" class="sticky top-0 z-10">
+      @if (isHandset()) {
+        <button mat-icon-button (click)="toggleSidenav()" aria-label="Toggle sidenav">
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
+      <span class="text-lg font-semibold">Finanzas</span>
+    </mat-toolbar>
+
+    <main class="p-6">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,0 +1,263 @@
+<app-page-header title="Calculadora de Reparto" subtitle="División proporcional de gastos compartidos" />
+
+<!-- Selectors -->
+<mat-card class="mb-6">
+  <mat-card-content>
+    <div class="flex flex-wrap gap-4 items-end pt-4">
+      <mat-form-field appearance="outline" class="w-64">
+        <mat-label>Grupo de Reparto</mat-label>
+        <mat-select [(ngModel)]="selectedGroupId">
+          @for (g of sharingGroups; track g.id) {
+            <mat-option [value]="g.id">{{ g.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-32">
+        <mat-label>Año</mat-label>
+        <input matInput type="number" [(ngModel)]="selectedYear" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-40">
+        <mat-label>Mes</mat-label>
+        <mat-select [(ngModel)]="selectedMonth">
+          @for (m of months; track m.value) {
+            <mat-option [value]="m.value">{{ m.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" (click)="calculate()" [disabled]="loading()">
+        <mat-icon>calculate</mat-icon>
+        Calcular
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>
+
+@if (loading()) {
+  <div class="flex justify-center py-12"><mat-spinner /></div>
+}
+
+@if (splitData(); as data) {
+  <!-- Header info -->
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-semibold text-gray-800">
+      {{ data.sharingGroupName }} — {{ getMonthLabel(data.month) }} {{ data.year }}
+    </h2>
+    <div class="flex items-center gap-3">
+      @if (savingStatus()) {
+        <mat-spinner diameter="20" />
+      }
+      <mat-slide-toggle
+        [checked]="isPaid()"
+        (change)="onPaidToggleChange($event.checked)"
+        color="primary"
+      >
+        Mes Pagado
+      </mat-slide-toggle>
+    </div>
+  </div>
+
+  <!-- Previous month carry-over warning -->
+  @if (!data.previousMonthIsPaid) {
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-center gap-2">
+      <mat-icon class="text-amber-600">warning</mat-icon>
+      <span class="text-amber-700 text-sm">El mes anterior no está marcado como pagado. Se incluye el carry-over.</span>
+    </div>
+  }
+
+  <!-- Section 1: Balances -->
+  <mat-card class="mb-6">
+    <mat-card-header>
+      <mat-card-title>Balances por Usuario</mat-card-title>
+      <mat-card-subtitle>Total disponible: {{ formatGs(data.totalAvailable) }}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="data.balances" class="w-full">
+        <ng-container matColumnDef="userName">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let row" class="font-medium">{{ row.userName }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalIncome">
+          <th mat-header-cell *matHeaderCellDef>Ingresos</th>
+          <td mat-cell *matCellDef="let row" class="text-right text-green-700">{{ formatGs(row.totalIncome) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalEgresos">
+          <th mat-header-cell *matHeaderCellDef>Egresos</th>
+          <td mat-cell *matCellDef="let row" class="text-right text-red-600">{{ formatGs(row.totalEgresos) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalFixedExpenses">
+          <th mat-header-cell *matHeaderCellDef>Gastos Fijos</th>
+          <td mat-cell *matCellDef="let row" class="text-right text-orange-600">{{ formatGs(row.totalFixedExpenses) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalOtherExpenses">
+          <th mat-header-cell *matHeaderCellDef>Otros Gastos</th>
+          <td mat-cell *matCellDef="let row" class="text-right text-orange-500">{{ formatGs(row.totalOtherExpenses) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="availableBalance">
+          <th mat-header-cell *matHeaderCellDef>Saldo Disponible</th>
+          <td mat-cell *matCellDef="let row" class="text-right font-bold">
+            <span [class]="row.availableBalance >= 0 ? 'text-green-700' : 'text-red-600'">
+              {{ formatGs(row.availableBalance) }}
+            </span>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="balanceColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: balanceColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Section 2: Items by section -->
+  <mat-card class="mb-6">
+    <mat-card-header>
+      <mat-card-title>Compromisos Compartidos</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @for (group of getSectionGroups(data); track group.section) {
+        <div class="mt-4 mb-2">
+          <h3 class="text-base font-semibold text-gray-700 border-b pb-1">{{ group.section }}</h3>
+        </div>
+        @for (item of group.items; track item.id) {
+          <div class="flex flex-wrap items-center gap-2 py-2 border-b border-gray-100 last:border-0">
+            <span class="flex-1 text-sm">{{ item.description }}</span>
+            <span class="text-sm font-medium">{{ formatGs(item.amount) }}</span>
+            <span class="text-xs text-gray-500">({{ (item.percent * 100).toFixed(1) }}%)</span>
+            @for (share of item.shares; track share.userId) {
+              <span class="bg-blue-50 text-blue-800 text-xs px-2 py-1 rounded-full">
+                {{ share.userName }}: {{ formatGs(share.amount) }}
+              </span>
+            }
+          </div>
+        }
+      }
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Section 3: Totals -->
+  <mat-card class="mb-6">
+    <mat-card-header>
+      <mat-card-title>Totales Proporcionales</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="data.totals" class="w-full">
+        <ng-container matColumnDef="userName">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let row" class="font-medium">{{ row.userName }}</td>
+        </ng-container>
+        <ng-container matColumnDef="availableBalance">
+          <th mat-header-cell *matHeaderCellDef>Saldo Disponible</th>
+          <td mat-cell *matCellDef="let row" class="text-right">{{ formatGs(row.availableBalance) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="totalAssigned">
+          <th mat-header-cell *matHeaderCellDef>Total Asignado</th>
+          <td mat-cell *matCellDef="let row" class="text-right">{{ formatGs(row.totalAssigned) }}</td>
+        </ng-container>
+        <ng-container matColumnDef="remainder">
+          <th mat-header-cell *matHeaderCellDef>Remanente</th>
+          <td mat-cell *matCellDef="let row" class="text-right font-bold">
+            <span [class]="row.remainder >= 0 ? 'text-green-700' : 'text-red-600'">
+              {{ formatGs(row.remainder) }}
+            </span>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="totalColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: totalColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Section 4: Adjustments -->
+  <mat-card class="mb-6">
+    <mat-card-header>
+      <mat-card-title>Ajustes Manuales</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (data.adjustments.length === 0) {
+        <p class="text-gray-500 text-sm py-2">Sin ajustes para este período.</p>
+      } @else {
+        @for (adj of data.adjustments; track adj.id) {
+          <div class="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+            <span class="flex-1 text-sm">
+              <span class="font-medium">{{ adj.userName }}</span> — {{ adj.description }}
+            </span>
+            <span class="text-sm font-medium" [class]="adj.amount >= 0 ? 'text-green-700' : 'text-red-600'">
+              {{ formatGs(adj.amount) }}
+            </span>
+            <button mat-icon-button color="primary" (click)="openEditAdjustment(adj)" title="Editar">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="openDeleteAdjustment(adj)" title="Eliminar">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        }
+      }
+      <div class="mt-3">
+        <button mat-stroked-button color="primary" (click)="openAddAdjustment()">
+          <mat-icon>add</mat-icon> Agregar Ajuste
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Section 5: Carry-over -->
+  @if (data.carryOver && data.carryOver.length > 0) {
+    <mat-card class="mb-6">
+      <mat-card-header>
+        <mat-card-title>Carry-over del Mes Anterior</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        @for (co of data.carryOver; track co.id) {
+          <div class="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
+            <span class="flex-1 text-sm">
+              <span class="font-medium">{{ co.userName }}</span> — {{ co.description }}
+            </span>
+            <span class="text-sm font-medium" [class]="co.amount >= 0 ? 'text-green-700' : 'text-red-600'">
+              {{ formatGs(co.amount) }}
+            </span>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Section 6: Final Totals -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+    @for (ft of data.finalTotals; track ft.userId) {
+      <mat-card [class]="isPaid() ? 'border-2 border-green-400' : ''">
+        <mat-card-header>
+          <mat-card-title>{{ ft.userName }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="pt-2">
+          <div class="flex justify-between text-sm text-gray-600 py-1">
+            <span>Monto proporcional:</span>
+            <span>{{ formatGs(ft.proportionalAmount) }}</span>
+          </div>
+          @if (ft.adjustmentsTotal !== 0) {
+            <div class="flex justify-between text-sm text-gray-600 py-1">
+              <span>Ajustes:</span>
+              <span [class]="ft.adjustmentsTotal >= 0 ? 'text-green-600' : 'text-red-600'">
+                {{ formatGs(ft.adjustmentsTotal) }}
+              </span>
+            </div>
+          }
+          @if (ft.carryOverTotal !== 0) {
+            <div class="flex justify-between text-sm text-gray-600 py-1">
+              <span>Carry-over:</span>
+              <span [class]="ft.carryOverTotal >= 0 ? 'text-green-600' : 'text-red-600'">
+                {{ formatGs(ft.carryOverTotal) }}
+              </span>
+            </div>
+          }
+          <mat-divider class="my-2" />
+          <div class="flex justify-between items-center">
+            <span class="text-base font-bold text-gray-800">Total Final:</span>
+            <span class="text-xl font-bold text-primary-700">{{ formatGs(ft.finalAmount) }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+}
