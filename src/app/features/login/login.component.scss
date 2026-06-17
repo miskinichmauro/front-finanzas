@@ -1,7 +1,8 @@
 .login-page {
-  min-height: 100vh;
+  height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 9fr 11fr;
+  grid-template-rows: 1fr;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -9,14 +10,38 @@
 }
 
 .login-brand {
-  background: linear-gradient(145deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+  background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 45%, #312e81 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px;
-  gap: 16px;
+  padding: 48px 40px;
+  gap: 20px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%);
+    top: -80px;
+    right: -80px;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
+    bottom: -60px;
+    left: -60px;
+    pointer-events: none;
+  }
 
   @media (max-width: 768px) {
     display: none;
@@ -59,39 +84,39 @@
 }
 
 .login-form-panel {
-  background: #f8fafc;
+  background: #f1f5f9;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 24px;
+  padding: 40px 32px;
 }
 
 .login-card {
   background: white;
-  border-radius: 16px;
-  padding: 40px;
+  border-radius: 20px;
+  padding: 44px 48px;
   width: 100%;
-  max-width: 420px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  max-width: 460px;
+  box-shadow: 0 2px 40px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.05);
 
   &__title {
-    font-size: 26px;
+    font-size: 28px;
     font-weight: 700;
     color: #0f172a;
-    margin: 0 0 6px;
+    margin: 0 0 8px;
   }
 
   &__sub {
     font-size: 14px;
-    color: #64748b;
-    margin: 0 0 28px;
+    color: #475569;
+    margin: 0 0 32px;
   }
 }
 
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
 }
 
 .login-error {
