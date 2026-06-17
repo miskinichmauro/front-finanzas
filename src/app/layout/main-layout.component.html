@@ -53,8 +53,16 @@
       }
       <div class="topbar-title">{{ currentPageTitle() }}</div>
       <div class="topbar-spacer"></div>
-      <div class="topbar-avatar">
-        <mat-icon>person</mat-icon>
+
+      <div class="topbar-user">
+        <div class="topbar-avatar">{{ userInitial() }}</div>
+        <div class="topbar-user-info">
+          <span class="topbar-user-name">{{ userName() }}</span>
+          <span class="topbar-user-role">{{ userRole() }}</span>
+        </div>
+        <button mat-icon-button class="logout-btn" (click)="logout()" title="Cerrar sesión">
+          <mat-icon>logout</mat-icon>
+        </button>
       </div>
     </header>
 

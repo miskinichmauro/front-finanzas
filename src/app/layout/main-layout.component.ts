@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
+import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -65,6 +66,13 @@ export class MainLayoutComponent {
   ];
 
   private readonly router = inject(Router);
+  private readonly auth   = inject(AuthService);
+
+  userName    = computed(() => this.auth.currentUser()?.userName ?? '');
+  userRole    = computed(() => this.auth.currentUser()?.role     ?? '');
+  userInitial = computed(() => this.userName().charAt(0).toUpperCase());
+
+  logout(): void { this.auth.logout(); }
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(

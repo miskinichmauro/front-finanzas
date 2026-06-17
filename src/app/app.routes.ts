@@ -1,10 +1,16 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout.component';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
+    path: 'login',
+    loadComponent: () => import('./features/login/login.component').then(m => m.LoginComponent)
+  },
+  {
     path: '',
     component: MainLayoutComponent,
+    canActivate: [authGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       {
@@ -56,5 +62,6 @@ export const routes: Routes = [
         loadComponent: () => import('./features/split-calculator/split-calculator.component').then(m => m.SplitCalculatorComponent)
       }
     ]
-  }
+  },
+  { path: '**', redirectTo: 'dashboard' }
 ];
