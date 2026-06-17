@@ -1,6 +1,5 @@
 <app-page-header title="Calculadora de Reparto" subtitle="División proporcional de gastos compartidos" />
 
-<!-- Selectors -->
 <mat-card class="mb-6">
   <mat-card-content>
     <div class="flex flex-wrap gap-4 items-end pt-4">
@@ -40,7 +39,6 @@
 }
 
 @if (splitData(); as data) {
-  <!-- Header info -->
   <div class="flex items-center justify-between mb-4">
     <h2 class="text-xl font-semibold text-gray-800">
       {{ data.sharingGroupName }} — {{ getMonthLabel(data.month) }} {{ data.year }}
@@ -59,7 +57,6 @@
     </div>
   </div>
 
-  <!-- Previous month carry-over warning -->
   @if (!data.previousMonthIsPaid) {
     <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 flex items-center gap-2">
       <mat-icon class="text-amber-600">warning</mat-icon>
@@ -67,7 +64,6 @@
     </div>
   }
 
-  <!-- Section 1: Balances -->
   <mat-card class="mb-6">
     <mat-card-header>
       <mat-card-title>Balances por Usuario</mat-card-title>
@@ -109,7 +105,6 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Section 2: Items by section -->
   <mat-card class="mb-6">
     <mat-card-header>
       <mat-card-title>Compromisos Compartidos</mat-card-title>
@@ -135,7 +130,6 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Section 3: Totals -->
   <mat-card class="mb-6">
     <mat-card-header>
       <mat-card-title>Totales Proporcionales</mat-card-title>
@@ -168,7 +162,6 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Section 4: Adjustments -->
   <mat-card class="mb-6">
     <mat-card-header>
       <mat-card-title>Ajustes Manuales</mat-card-title>
@@ -202,7 +195,6 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Section 5: Carry-over -->
   @if (data.carryOver && data.carryOver.length > 0) {
     <mat-card class="mb-6">
       <mat-card-header>
@@ -223,7 +215,6 @@
     </mat-card>
   }
 
-  <!-- Section 6: Final Totals -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
     @for (ft of data.finalTotals; track ft.userId) {
       <mat-card [class]="isPaid() ? 'border-2 border-green-400' : ''">

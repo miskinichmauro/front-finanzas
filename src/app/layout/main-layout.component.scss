@@ -1,10 +1,6 @@
-// ── Layout container ─────────────────────────────────────────────────────────
-
 .app-container {
   height: 100vh;
 }
-
-// ── Sidenav ───────────────────────────────────────────────────────────────────
 
 .app-sidenav {
   width: 260px;
@@ -137,8 +133,6 @@
 
   mat-icon { font-size: 14px; width: 14px; height: 14px; }
 }
-
-// ── Content area ──────────────────────────────────────────────────────────────
 
 .app-content {
   background: #f1f5f9 !important;

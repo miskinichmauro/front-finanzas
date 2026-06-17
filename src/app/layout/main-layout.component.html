@@ -1,9 +1,7 @@
 <mat-sidenav-container class="app-container">
 
-  <!-- ── SIDEBAR ── -->
   <mat-sidenav #sidenav [mode]="isHandset() ? 'over' : 'side'" [opened]="!isHandset()" class="app-sidenav">
 
-    <!-- Logo -->
     <div class="sidenav-logo">
       <div class="logo-icon">
         <mat-icon>account_balance</mat-icon>
@@ -14,7 +12,6 @@
       </div>
     </div>
 
-    <!-- Nav groups -->
     <nav class="sidenav-nav">
       @for (group of navGroups; track group.label) {
         <div class="nav-group">
@@ -34,17 +31,14 @@
       }
     </nav>
 
-    <!-- Footer -->
     <div class="sidenav-footer">
       <mat-icon class="text-slate-500 text-sm">info</mat-icon>
       <span class="text-slate-500 text-xs">v1.0.0</span>
     </div>
   </mat-sidenav>
 
-  <!-- ── CONTENT ── -->
   <mat-sidenav-content class="app-content">
 
-    <!-- Top bar -->
     <header class="app-topbar">
       @if (isHandset()) {
         <button mat-icon-button (click)="sidenav.toggle()" class="menu-btn">
@@ -66,7 +60,6 @@
       </div>
     </header>
 
-    <!-- Page content -->
     <main class="app-main">
       <router-outlet />
     </main>
