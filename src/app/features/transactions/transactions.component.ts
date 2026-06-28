@@ -9,12 +9,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TransactionFormDialogComponent } from './transaction-form-dialog.component';
+import { XmlImportDialogComponent } from '../xml-import/xml-import-dialog.component';
 import { TransactionsService } from '../../core/services/transactions.service';
 import { UsersService } from '../../core/services/users.service';
 import { CategoriesService } from '../../core/services/categories.service';
@@ -34,9 +33,7 @@ import { TransactionDto, UserDto, CategoryDto, CommerceDto, PaymentMethodDto } f
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatSelectModule,
-    MatFormFieldModule,
-    MatInputModule,
+    AppSelectComponent,
     PageHeaderComponent
   ],
   templateUrl: './transactions.component.html'
@@ -50,12 +47,13 @@ export class TransactionsComponent implements OnInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
+  @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
   displayedColumns = ['date', 'commerceName', 'categoryName', 'userName', 'grossAmount', 'netAmount', 'actions'];
   loading = signal(false);
   dataSource = new MatTableDataSource<TransactionDto>([]);
+  searchText = '';
 
   users: UserDto[] = [];
   categories: CategoryDto[] = [];
@@ -72,6 +70,20 @@ export class TransactionsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+    this.dataSource.filterPredicate = (row: TransactionDto, filter: string) => {
+      const searchable = [
+        row.date,
+        this.getCommerceName(row.commerceId),
+        this.getCategoryName(row.categoryId),
+        this.getUserName(row.userId),
+        String(row.grossAmount),
+        String(row.netAmount),
+        row.notes ?? ''
+      ].join(' ').toLowerCase();
+      return searchable.includes(filter);
+    };
     this.usersService.getAll().subscribe(u => this.users = u);
     this.categoriesService.getAll().subscribe(c => this.categories = c);
     this.commercesService.getAll().subscribe(c => this.commerces = c);
@@ -81,11 +93,10 @@ export class TransactionsComponent implements OnInit {
 
   loadData(): void {
     this.loading.set(true);
+    this.dataSource.data = [];
     this.transactionsService.getAll({ year: this.filterYear, month: this.filterMonth }).subscribe({
       next: data => {
         this.dataSource.data = data;
-        this.dataSource.paginator = this.paginator;
-        this.dataSource.sort = this.sort;
         this.loading.set(false);
       },
       error: () => {
@@ -93,6 +104,11 @@ export class TransactionsComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  applyFilter(): void {
+    this.dataSource.filter = this.searchText.trim().toLowerCase();
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
 
   getUserName(userId: string): string {
@@ -109,8 +125,26 @@ export class TransactionsComponent implements OnInit {
     return this.commerces.find(c => c.id === id)?.name ?? '—';
   }
 
+  get totalGross(): number {
+    return this.dataSource.data.reduce((sum, row) => sum + row.grossAmount, 0);
+  }
+
+  get totalNet(): number {
+    return this.dataSource.data.reduce((sum, row) => sum + row.netAmount, 0);
+  }
+
   formatAmount(amount: number): string {
     return amount.toLocaleString('es-PY');
+  }
+
+  openXmlImport(): void {
+    const ref = this.dialog.open(XmlImportDialogComponent, {
+      data: { mode: 'transaction' },
+      width: '95vw',
+      maxWidth: '1100px',
+      maxHeight: '95vh'
+    });
+    ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
   }
 
   openCreate(): void {

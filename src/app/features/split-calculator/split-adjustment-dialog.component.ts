@@ -2,11 +2,9 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ThousandsDirective } from '../../shared/directives/thousands.directive';
 import { SplitService } from '../../core/services/split.service';
 import { SplitAdjustmentDto, UserDto } from '../../core/models';
 
@@ -25,53 +23,52 @@ export interface AdjustmentDialogData {
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule
+    MatButtonModule,
+    ThousandsDirective
   ],
   template: `
     <h2 mat-dialog-title>{{ isEdit ? 'Editar Ajuste' : 'Nuevo Ajuste' }}</h2>
     <mat-dialog-content>
-      <form [formGroup]="form" class="flex flex-col gap-4 pt-2 min-w-80">
-        <mat-form-field appearance="outline">
-          <mat-label>Usuario</mat-label>
-          <mat-select formControlName="userId">
-            @for (u of data.users; track u.id) {
-              <mat-option [value]="u.id">{{ u.name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Descripción</mat-label>
-          <input matInput formControlName="description" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Monto (Gs.) — negativo para descuento</mat-label>
-          <input matInput type="number" formControlName="amount" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Orden de visualización</mat-label>
-          <input matInput type="number" formControlName="displayOrder" />
-        </mat-form-field>
+      <form [formGroup]="form" class="dialog-form">
+        <div class="field">
+          <label>Usuario
+            <select formControlName="userId">
+              @for (u of data.users; track u.id) {
+                <option [value]="u.id">{{ u.name }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        <div class="field">
+          <label>Descripción
+            <input formControlName="description" placeholder="Ej: Plan Telefonía" />
+          </label>
+        </div>
+        <div class="field">
+          <label>Monto (Gs.) — negativo para descuento
+            <input formControlName="amount" appThousands />
+          </label>
+        </div>
+        <div class="field">
+          <label>Orden de visualización
+            <input type="number" formControlName="displayOrder" />
+          </label>
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button mat-dialog-close>Cancelar</button>
-      <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
+      <button mat-flat-button class="btn-primary" (click)="onSubmit()" [disabled]="form.invalid">
         Guardar
       </button>
     </mat-dialog-actions>
   `
 })
 export class SplitAdjustmentDialogComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private splitService = inject(SplitService);
-  private dialogRef = inject(MatDialogRef<SplitAdjustmentDialogComponent>);
-  private snackBar = inject(MatSnackBar);
+  private readonly fb = inject(FormBuilder);
+  private readonly splitService = inject(SplitService);
+  private readonly dialogRef = inject(MatDialogRef<SplitAdjustmentDialogComponent>);
+  private readonly snackBar = inject(MatSnackBar);
   data = inject<AdjustmentDialogData>(MAT_DIALOG_DATA);
 
   form = this.fb.group({

@@ -2,8 +2,6 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -17,8 +15,6 @@ import { CommerceDto } from '../../core/models';
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatButtonModule,
     MatCheckboxModule
   ],
@@ -49,8 +45,11 @@ export class CommerceFormDialogComponent implements OnInit {
     }
   }
 
+  saving = false;
+
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.saving) return;
+    this.saving = true;
     const value = this.form.value;
     const dto = {
       name: value.name!,
@@ -64,7 +63,7 @@ export class CommerceFormDialogComponent implements OnInit {
           this.snackBar.open('Comercio actualizado', 'Cerrar', { duration: 3000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 }); }
       });
     } else {
       this.commercesService.create(dto).subscribe({
@@ -72,7 +71,7 @@ export class CommerceFormDialogComponent implements OnInit {
           this.snackBar.open('Comercio creado', 'Cerrar', { duration: 3000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 }); }
       });
     }
   }

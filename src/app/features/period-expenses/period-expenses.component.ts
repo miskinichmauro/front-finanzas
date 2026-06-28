@@ -9,17 +9,15 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { PeriodExpenseFormDialogComponent } from './period-expense-form-dialog.component';
 import { PeriodExpensesService } from '../../core/services/period-expenses.service';
 import { UsersService } from '../../core/services/users.service';
 import { CategoriesService } from '../../core/services/categories.service';
-import { PeriodExpenseDto, UserDto, CategoryDto } from '../../core/models';
+import { PeriodExpenseDto } from '../../core/models/period-expense.model';
+import { UserDto, CategoryDto } from '../../core/models';
 
 @Component({
   selector: 'app-period-expenses',
@@ -33,10 +31,7 @@ import { PeriodExpenseDto, UserDto, CategoryDto } from '../../core/models';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
-    MatSelectModule,
-    MatFormFieldModule,
-    MatInputModule,
+    AppSelectComponent,
     PageHeaderComponent
   ],
   templateUrl: './period-expenses.component.html'
@@ -48,14 +43,15 @@ export class PeriodExpensesComponent implements OnInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
+  @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
-  displayedColumns = ['description', 'type', 'userName', 'amount', 'isPaid', 'actions'];
+  displayedColumns = ['description', 'userName', 'amount', 'isPaid', 'actions'];
   loading = signal(false);
   dataSource = new MatTableDataSource<PeriodExpenseDto>([]);
   users: UserDto[] = [];
   categories: CategoryDto[] = [];
+  searchText = '';
 
   filterYear = new Date().getFullYear();
   filterMonth = new Date().getMonth() + 1;
@@ -67,6 +63,8 @@ export class PeriodExpensesComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
     this.usersService.getAll().subscribe(u => this.users = u);
     this.categoriesService.getAll().subscribe(c => this.categories = c);
     this.loadData();
@@ -74,11 +72,10 @@ export class PeriodExpensesComponent implements OnInit {
 
   loadData(): void {
     this.loading.set(true);
+    this.dataSource.data = [];
     this.periodExpensesService.getAll(undefined, this.filterYear, this.filterMonth).subscribe({
       next: data => {
         this.dataSource.data = data;
-        this.dataSource.paginator = this.paginator;
-        this.dataSource.sort = this.sort;
         this.loading.set(false);
       },
       error: () => {
@@ -88,8 +85,17 @@ export class PeriodExpensesComponent implements OnInit {
     });
   }
 
+  applyFilter(): void {
+    this.dataSource.filter = this.searchText.trim().toLowerCase();
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+  }
+
   getUserName(userId: string): string {
     return this.users.find(u => u.id === userId)?.name ?? '—';
+  }
+
+  get total(): number {
+    return this.dataSource.data.reduce((sum, row) => sum + row.amount, 0);
   }
 
   formatAmount(amount: number): string {
@@ -97,12 +103,12 @@ export class PeriodExpensesComponent implements OnInit {
   }
 
   openCreate(): void {
-    const ref = this.dialog.open(PeriodExpenseFormDialogComponent, { data: null, width: '550px' });
+    const ref = this.dialog.open(PeriodExpenseFormDialogComponent, { data: null, width: '600px' });
     ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
   }
 
   openEdit(item: PeriodExpenseDto): void {
-    const ref = this.dialog.open(PeriodExpenseFormDialogComponent, { data: item, width: '550px' });
+    const ref = this.dialog.open(PeriodExpenseFormDialogComponent, { data: item, width: '600px' });
     ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
   }
 

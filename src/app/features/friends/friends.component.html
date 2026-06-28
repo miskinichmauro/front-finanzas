@@ -1,0 +1,128 @@
+<app-page-header
+  title="Amigos"
+  subtitle="Administrá tus conexiones para compartir gastos">
+</app-page-header>
+
+@if (loading()) {
+  <div class="loading-wrap">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+} @else {
+  <div class="friends-layout">
+
+    <!-- Columna izquierda: Mis amigos -->
+    <div class="friends-panel">
+      <div class="panel-header">
+        <h3>Mis amigos ({{ friends().length }})</h3>
+      </div>
+      <div class="search-box">
+        <label for="search-friends" class="sr-only">Filtrar amigos</label>
+        <input id="search-friends" type="search" [ngModel]="friendSearchText()" (ngModelChange)="friendSearchText.set($event)" placeholder="Filtrar amigos..." />
+      </div>
+      <div class="user-list">
+        @for (friend of filteredFriends(); track friend.requestId) {
+          <div class="user-row">
+            <div class="user-avatar user-avatar--friend">{{ userInitial(friend.friendName) }}</div>
+            <div class="user-info">
+              <span class="user-name">{{ friend.friendName }}</span>
+              <span class="user-email">{{ friend.friendEmail }}</span>
+            </div>
+            <button mat-icon-button class="btn-remove" title="Eliminar amigo" (click)="removeFriend(friend)">
+              <mat-icon>person_remove</mat-icon>
+            </button>
+          </div>
+        }
+        @if (filteredFriends().length === 0) {
+          <div class="empty-state">
+            <mat-icon>people_outline</mat-icon>
+            <span>{{ friends().length === 0 ? 'Todavía no tenés amigos' : 'Sin resultados' }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Columna central: Solicitudes -->
+    <div class="friends-panel">
+      <div class="panel-header">
+        <h3>Solicitudes</h3>
+      </div>
+
+      @if (pendingRequests().length > 0) {
+        <p class="section-label">Recibidas ({{ pendingRequests().length }})</p>
+        @for (req of pendingRequests(); track req.requestId) {
+          <div class="user-row">
+            <div class="user-avatar user-avatar--pending">{{ userInitial(req.fromUserName) }}</div>
+            <div class="user-info">
+              <span class="user-name">{{ req.fromUserName }}</span>
+              <span class="user-email">{{ req.fromUserEmail }}</span>
+            </div>
+            <div class="row-actions">
+              <button mat-icon-button class="btn-accept" title="Aceptar" (click)="acceptRequest(req)">
+                <mat-icon>check</mat-icon>
+              </button>
+              <button mat-icon-button class="btn-decline" title="Rechazar" (click)="declineRequest(req)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+        }
+      }
+
+      @if (sentRequests().length > 0) {
+        <p class="section-label">Enviadas ({{ sentRequests().length }})</p>
+        @for (req of sentRequests(); track req.requestId) {
+          <div class="user-row">
+            <div class="user-avatar user-avatar--sent">{{ userInitial(req.toUserName) }}</div>
+            <div class="user-info">
+              <span class="user-name">{{ req.toUserName }}</span>
+              <span class="user-email">{{ req.toUserEmail }}</span>
+            </div>
+            <button mat-icon-button class="btn-cancel" title="Cancelar" (click)="cancelSent(req)">
+              <mat-icon>cancel</mat-icon>
+            </button>
+          </div>
+        }
+      }
+
+      @if (pendingRequests().length === 0 && sentRequests().length === 0) {
+        <div class="empty-state">
+          <mat-icon>mail_outline</mat-icon>
+          <span>Sin solicitudes pendientes</span>
+        </div>
+      }
+    </div>
+
+    <!-- Columna derecha: Buscar usuarios -->
+    <div class="friends-panel">
+      <div class="panel-header">
+        <h3>Agregar amigos</h3>
+        <p>Buscá por nombre o email</p>
+      </div>
+      <div class="search-box">
+        <label for="search-users" class="sr-only">Buscar usuarios</label>
+        <input id="search-users" type="search" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" placeholder="Buscar usuarios..." />
+      </div>
+      <div class="user-list">
+        @for (user of availableUsers(); track user.id) {
+          <div class="user-row">
+            <div class="user-avatar">{{ userInitial(user.name) }}</div>
+            <div class="user-info">
+              <span class="user-name">{{ user.name }}</span>
+              <span class="user-email">{{ user.email }}</span>
+            </div>
+            <button mat-icon-button class="btn-add" title="Agregar amigo" (click)="sendRequest(user)">
+              <mat-icon>person_add</mat-icon>
+            </button>
+          </div>
+        }
+        @if (availableUsers().length === 0) {
+          <div class="empty-state">
+            <mat-icon>search_off</mat-icon>
+            <span>Sin resultados</span>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+}

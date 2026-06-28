@@ -1,6 +1,7 @@
 export interface TransactionDto {
   id: string;
   date: string;
+  description: string | null;
   commerceId: string | null;
   userId: string;
   paymentMethodId: string | null;
@@ -10,10 +11,12 @@ export interface TransactionDto {
   discountAmount: number;
   discountPercent: number;
   notes: string;
+  invoiceId: string | null;
 }
 
 export interface CreateTransactionDto {
   date: string;
+  description?: string;
   commerceId?: string;
   userId: string;
   paymentMethodId?: string;
@@ -23,10 +26,12 @@ export interface CreateTransactionDto {
   discountAmount?: number;
   discountPercent?: number;
   notes?: string;
+  invoiceId?: string;
 }
 
 export interface UpdateTransactionDto {
   date: string;
+  description?: string;
   commerceId?: string;
   userId: string;
   paymentMethodId?: string;
@@ -36,4 +41,5 @@ export interface UpdateTransactionDto {
   discountAmount?: number;
   discountPercent?: number;
   notes?: string;
+  invoiceId?: string;
 }

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
@@ -8,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { PaymentMethodFormDialogComponent } from './payment-method-form-dialog.component';
@@ -20,13 +20,13 @@ import { PaymentMethodDto } from '../../core/models';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
     PageHeaderComponent
   ],
   templateUrl: './payment-methods.component.html'
@@ -36,22 +36,27 @@ export class PaymentMethodsComponent implements OnInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
+  @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
   displayedColumns = ['name', 'type', 'bankName', 'lastDigits', 'isActive', 'actions'];
   loading = signal(false);
   dataSource = new MatTableDataSource<PaymentMethodDto>([]);
+  searchText = '';
 
-  ngOnInit(): void { this.loadData(); }
+  ngOnInit(): void {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+    this.loadData();
+  }
+
 
   loadData(): void {
     this.loading.set(true);
+    this.dataSource.data = [];
     this.paymentMethodsService.getAll().subscribe({
       next: data => {
         this.dataSource.data = data;
-        this.dataSource.paginator = this.paginator;
-        this.dataSource.sort = this.sort;
         this.loading.set(false);
       },
       error: () => {
@@ -61,13 +66,18 @@ export class PaymentMethodsComponent implements OnInit {
     });
   }
 
+  applyFilter(): void {
+    this.dataSource.filter = this.searchText.trim().toLowerCase();
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
+  }
+
   openCreate(): void {
-    const ref = this.dialog.open(PaymentMethodFormDialogComponent, { data: null, width: '450px' });
+    const ref = this.dialog.open(PaymentMethodFormDialogComponent, { data: null, width: '480px' });
     ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
   }
 
   openEdit(item: PaymentMethodDto): void {
-    const ref = this.dialog.open(PaymentMethodFormDialogComponent, { data: item, width: '450px' });
+    const ref = this.dialog.open(PaymentMethodFormDialogComponent, { data: item, width: '480px' });
     ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
   }
 

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
 import { MatSortModule, MatSort } from '@angular/material/sort';
@@ -8,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { FixedExpenseFormDialogComponent } from './fixed-expense-form-dialog.component';
@@ -22,13 +22,13 @@ import { FixedExpenseDto, UserDto, CategoryDto } from '../../core/models';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
     PageHeaderComponent
   ],
   templateUrl: './fixed-expenses.component.html'
@@ -40,28 +40,35 @@ export class FixedExpensesComponent implements OnInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
+  @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
   displayedColumns = ['description', 'userName', 'categoryName', 'amount', 'dueDay', 'isActive', 'actions'];
   loading = signal(false);
   dataSource = new MatTableDataSource<FixedExpenseDto>([]);
   users: UserDto[] = [];
   categories: CategoryDto[] = [];
+  searchText = '';
+
+  get total(): number {
+    return this.dataSource.data.reduce((sum, row) => sum + row.amount, 0);
+  }
 
   ngOnInit(): void {
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
     this.usersService.getAll().subscribe(u => this.users = u);
     this.categoriesService.getAll().subscribe(c => this.categories = c);
     this.loadData();
   }
 
+
   loadData(): void {
     this.loading.set(true);
+    this.dataSource.data = [];
     this.fixedExpensesService.getAll(undefined, true).subscribe({
       next: data => {
         this.dataSource.data = data;
-        this.dataSource.paginator = this.paginator;
-        this.dataSource.sort = this.sort;
         this.loading.set(false);
       },
       error: () => {
@@ -69,6 +76,11 @@ export class FixedExpensesComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  applyFilter(): void {
+    this.dataSource.filter = this.searchText.trim().toLowerCase();
+    if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
 
   getUserName(userId: string): string {
@@ -84,12 +96,12 @@ export class FixedExpensesComponent implements OnInit {
   }
 
   openCreate(): void {
-    const ref = this.dialog.open(FixedExpenseFormDialogComponent, { data: null, width: '500px' });
+    const ref = this.dialog.open(FixedExpenseFormDialogComponent, { data: null, width: '600px' });
     ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
   }
 
   openEdit(item: FixedExpenseDto): void {
-    const ref = this.dialog.open(FixedExpenseFormDialogComponent, { data: item, width: '500px' });
+    const ref = this.dialog.open(FixedExpenseFormDialogComponent, { data: item, width: '600px' });
     ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
   }
 

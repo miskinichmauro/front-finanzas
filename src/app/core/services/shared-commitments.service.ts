@@ -9,10 +9,9 @@ export class SharedCommitmentsService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/api/shared-commitments`;
 
-  getAll(sharingGroupId?: string, section?: string, includeInactive?: boolean): Observable<SharedCommitmentDto[]> {
+  getAll(sharingGroupId?: string, includeInactive?: boolean): Observable<SharedCommitmentDto[]> {
     let params = new HttpParams();
     if (sharingGroupId) params = params.set('sharingGroupId', sharingGroupId);
-    if (section) params = params.set('section', section);
     if (includeInactive !== undefined) params = params.set('includeInactive', includeInactive.toString());
     return this.http.get<SharedCommitmentDto[]>(this.baseUrl, { params });
   }

@@ -2,13 +2,11 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
+import { ThousandsDirective } from '../../shared/directives/thousands.directive';
+import { AuthService } from '../../core/services/auth.service';
 import { TransactionsService } from '../../core/services/transactions.service';
 import { UsersService } from '../../core/services/users.service';
 import { CategoriesService } from '../../core/services/categories.service';
@@ -23,36 +21,37 @@ import { TransactionDto, UserDto, CategoryDto, PaymentMethodDto, CommerceDto } f
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
     MatButtonModule,
-    MatDatepickerModule,
-    MatNativeDateModule
+    AppSelectComponent,
+    ThousandsDirective
   ],
   templateUrl: './transaction-form-dialog.component.html'
 })
 export class TransactionFormDialogComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private transactionsService = inject(TransactionsService);
-  private usersService = inject(UsersService);
-  private categoriesService = inject(CategoriesService);
-  private paymentMethodsService = inject(PaymentMethodsService);
-  private commercesService = inject(CommercesService);
-  private dialogRef = inject(MatDialogRef<TransactionFormDialogComponent>);
-  private snackBar = inject(MatSnackBar);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly transactionsService = inject(TransactionsService);
+  private readonly usersService = inject(UsersService);
+  private readonly categoriesService = inject(CategoriesService);
+  private readonly paymentMethodsService = inject(PaymentMethodsService);
+  private readonly commercesService = inject(CommercesService);
+  private readonly dialogRef = inject(MatDialogRef<TransactionFormDialogComponent>);
+  private readonly snackBar = inject(MatSnackBar);
   data = inject<TransactionDto | null>(MAT_DIALOG_DATA);
+
+  readonly isAdmin = this.authService.isAdmin;
 
   users: UserDto[] = [];
   categories: CategoryDto[] = [];
-  paymentMethods: PaymentMethodDto[] = [];
-  commerces: CommerceDto[] = [];
+  paymentMethods: (PaymentMethodDto & { displayName: string })[] = [];
+  commerces: (CommerceDto & { displayName: string })[] = [];
 
   form = this.fb.group({
-    date: [new Date(), [Validators.required]],
+    date: [new Date().toISOString().split('T')[0], [Validators.required]],
     userId: ['', [Validators.required]],
+    description: ['', [Validators.required]],
     commerceId: [null as string | null],
-    categoryId: [null as string | null],
+    categoryId: [null as string | null, [Validators.required]],
     paymentMethodId: [null as string | null],
     grossAmount: [0, [Validators.required, Validators.min(0)]],
     netAmount: [0, [Validators.required, Validators.min(0)]],
@@ -64,15 +63,31 @@ export class TransactionFormDialogComponent implements OnInit {
   get isEdit(): boolean { return !!this.data; }
 
   ngOnInit(): void {
-    this.usersService.getAll().subscribe(u => this.users = u);
+    if (this.isAdmin()) {
+      this.usersService.getAll().subscribe(u => this.users = u);
+    } else {
+      this.form.patchValue({ userId: this.authService.currentUser()?.userId ?? '' });
+      this.form.get('userId')?.disable();
+    }
     this.categoriesService.getAll().subscribe(c => this.categories = c);
-    this.paymentMethodsService.getAll().subscribe(p => this.paymentMethods = p);
-    this.commercesService.getAll().subscribe(c => this.commerces = c);
+    this.paymentMethodsService.getAll().subscribe(p => {
+      this.paymentMethods = p.map(m => ({
+        ...m,
+        displayName: [m.name, m.lastDigits || null, m.bankName || null].filter(Boolean).join(' - ')
+      }));
+    });
+    this.commercesService.getAll().subscribe(c => {
+      this.commerces = c.map(x => ({
+        ...x,
+        displayName: x.address ? `${x.name} - ${x.address}` : x.name
+      }));
+    });
 
     if (this.data) {
       this.form.patchValue({
-        date: new Date(this.data.date),
+        date: this.data.date,
         userId: this.data.userId,
+        description: this.data.description ?? '',
         commerceId: this.data.commerceId,
         categoryId: this.data.categoryId,
         paymentMethodId: this.data.paymentMethodId,
@@ -85,19 +100,33 @@ export class TransactionFormDialogComponent implements OnInit {
     }
   }
 
-  onGrossAmountChange(): void {
+  onGrossAmountChange(): void { this.recalcFromPercent(); }
+  onDiscountPercentChange(): void { this.recalcFromPercent(); }
+
+  private recalcFromPercent(): void {
     const gross = this.form.get('grossAmount')?.value ?? 0;
-    const discount = this.form.get('discountAmount')?.value ?? 0;
-    this.form.patchValue({ netAmount: gross - discount }, { emitEvent: false });
+    const pct = this.form.get('discountPercent')?.value ?? 0;
+    const discountAmt = Math.round(gross * pct / 100);
+    this.form.patchValue({ discountAmount: discountAmt, netAmount: gross - discountAmt }, { emitEvent: false });
   }
 
+  onDiscountAmountChange(): void {
+    const gross = this.form.get('grossAmount')?.value ?? 0;
+    const discount = this.form.get('discountAmount')?.value ?? 0;
+    const pct = gross > 0 ? Math.round(discount / gross * 100) : 0;
+    this.form.patchValue({ discountPercent: pct, netAmount: gross - discount }, { emitEvent: false });
+  }
+
+  saving = false;
+
   onSubmit(): void {
-    if (this.form.invalid) return;
-    const value = this.form.value;
-    const dateVal = value.date instanceof Date ? value.date : new Date(value.date!);
+    if (this.form.invalid || this.saving) return;
+    this.saving = true;
+    const value = this.form.getRawValue();
     const dto = {
-      date: dateVal.toISOString().split('T')[0],
+      date: value.date!,
       userId: value.userId!,
+      description: value.description || undefined,
       commerceId: value.commerceId || undefined,
       categoryId: value.categoryId || undefined,
       paymentMethodId: value.paymentMethodId || undefined,
@@ -114,7 +143,7 @@ export class TransactionFormDialogComponent implements OnInit {
           this.snackBar.open('Transacción actualizada', 'Cerrar', { duration: 3000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 }); }
       });
     } else {
       this.transactionsService.create(dto).subscribe({
@@ -122,7 +151,7 @@ export class TransactionFormDialogComponent implements OnInit {
           this.snackBar.open('Transacción creada', 'Cerrar', { duration: 3000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 }); }
       });
     }
   }

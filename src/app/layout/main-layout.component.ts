@@ -9,6 +9,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import { AuthService } from '../core/services/auth.service';
+import { ThemeService } from '../core/services/theme.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -29,8 +30,9 @@ import { AuthService } from '../core/services/auth.service';
 export class MainLayoutComponent {
   @ViewChild('sidenav') sidenav!: MatSidenav;
   isHandset = signal(false);
+  sidenavOpen = signal(true);
 
-  navGroups = [
+  navGroups: { label: string; items: { label: string; icon: string; route: string; adminOnly?: boolean }[] }[] = [
     {
       label: 'General',
       items: [
@@ -40,19 +42,32 @@ export class MainLayoutComponent {
     {
       label: 'Finanzas',
       items: [
-        { label: 'Ingresos',          icon: 'trending_up',  route: '/ingresos' },
-        { label: 'Gastos del Período', icon: 'receipt_long', route: '/gastos-periodo' },
-        { label: 'Transacciones',     icon: 'swap_horiz',   route: '/transacciones' }
+        { label: 'Ingresos',     icon: 'trending_up', route: '/ingresos' },
+        { label: 'Gastos Fijos', icon: 'repeat',      route: '/gastos-fijos' },
+        { label: 'Transacciones',      icon: 'swap_horiz',     route: '/transacciones' },
+        { label: 'Pagos Pendientes',   icon: 'pending_actions', route: '/pagos-pendientes' },
+        { label: 'Préstamos',          icon: 'account_balance', route: '/prestamos' }
       ]
     },
     {
       label: 'Configuración',
       items: [
-        { label: 'Usuarios',     icon: 'people',   route: '/usuarios' },
-        { label: 'Categorías',   icon: 'category', route: '/categorias' },
-        { label: 'Comercios',    icon: 'store',    route: '/comercios' },
-        { label: 'Medios de Pago', icon: 'payment', route: '/medios-de-pago' },
-        { label: 'Gastos Fijos', icon: 'repeat',   route: '/gastos-fijos' }
+        { label: 'Usuarios',       icon: 'people',   route: '/usuarios', adminOnly: true },
+        { label: 'Categorías',     icon: 'category', route: '/categorias' },
+        { label: 'Comercios',      icon: 'store',    route: '/comercios' },
+        { label: 'Medios de Pago', icon: 'payment',  route: '/medios-de-pago' }
+      ]
+    },
+    {
+      label: 'Herramientas',
+      items: [
+        { label: 'XML a Excel', icon: 'transform', route: '/xml-a-excel' }
+      ]
+    },
+    {
+      label: 'Social',
+      items: [
+        { label: 'Amigos', icon: 'people', route: '/amigos' }
       ]
     },
     {
@@ -67,12 +82,26 @@ export class MainLayoutComponent {
 
   private readonly router = inject(Router);
   private readonly auth   = inject(AuthService);
+  readonly theme   = inject(ThemeService);
+  readonly isAdmin = this.auth.isAdmin;
 
   userName    = computed(() => this.auth.currentUser()?.userName ?? '');
   userRole    = computed(() => this.auth.currentUser()?.role     ?? '');
   userInitial = computed(() => this.userName().charAt(0).toUpperCase());
 
   logout(): void { this.auth.logout(); }
+
+  toggleSidenav(): void {
+    this.sidenavOpen.set(!this.sidenavOpen());
+    this.sidenav.toggle();
+  }
+
+  closeOnMobile(): void {
+    if (this.isHandset()) {
+      this.sidenavOpen.set(false);
+      this.sidenav.close();
+    }
+  }
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -95,6 +124,9 @@ export class MainLayoutComponent {
   constructor() {
     inject(BreakpointObserver).observe([Breakpoints.Handset])
       .pipe(takeUntilDestroyed())
-      .subscribe(result => this.isHandset.set(result.matches));
+      .subscribe(result => {
+        this.isHandset.set(result.matches);
+        this.sidenavOpen.set(!result.matches);
+      });
   }
 }

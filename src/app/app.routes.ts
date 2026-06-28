@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout.component';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -19,6 +20,7 @@ export const routes: Routes = [
       },
       {
         path: 'usuarios',
+        canActivate: [adminGuard],
         loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent)
       },
       {
@@ -42,12 +44,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/incomes/incomes.component').then(m => m.IncomesComponent)
       },
       {
-        path: 'gastos-periodo',
-        loadComponent: () => import('./features/period-expenses/period-expenses.component').then(m => m.PeriodExpensesComponent)
-      },
-      {
         path: 'transacciones',
         loadComponent: () => import('./features/transactions/transactions.component').then(m => m.TransactionsComponent)
+      },
+      {
+        path: 'pagos-pendientes',
+        loadComponent: () => import('./features/pending-payments/pending-payments.component').then(m => m.PendingPaymentsComponent)
       },
       {
         path: 'grupos-reparto',
@@ -60,6 +62,18 @@ export const routes: Routes = [
       {
         path: 'calculadora-reparto',
         loadComponent: () => import('./features/split-calculator/split-calculator.component').then(m => m.SplitCalculatorComponent)
+      },
+      {
+        path: 'prestamos',
+        loadComponent: () => import('./features/loans/loans.component').then(m => m.LoansComponent)
+      },
+      {
+        path: 'xml-a-excel',
+        loadComponent: () => import('./features/xml-converter/xml-converter.component').then(m => m.XmlConverterComponent)
+      },
+      {
+        path: 'amigos',
+        loadComponent: () => import('./features/friends/friends.component').then(m => m.FriendsComponent)
       }
     ]
   },

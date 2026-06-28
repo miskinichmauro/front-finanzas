@@ -3,12 +3,14 @@ export interface PeriodExpenseDto {
   userId: string;
   categoryId: string | null;
   paymentMethodId: string | null;
-  type: string;
   description: string;
   amount: number;
   year: number;
   month: number;
   isPaid: boolean;
+  paidAt: string | null;
+  receiptNumber: string | null;
+  paymentDescription: string | null;
   notes: string;
 }
 
@@ -16,7 +18,6 @@ export interface CreatePeriodExpenseDto {
   userId: string;
   categoryId?: string;
   paymentMethodId?: string;
-  type: string;
   description: string;
   amount: number;
   year: number;
@@ -29,7 +30,6 @@ export interface UpdatePeriodExpenseDto {
   userId: string;
   categoryId?: string;
   paymentMethodId?: string;
-  type: string;
   description: string;
   amount: number;
   year: number;
@@ -38,4 +38,9 @@ export interface UpdatePeriodExpenseDto {
   notes?: string;
 }
 
-export const PERIOD_EXPENSE_TYPES = ['Egreso', 'OtroGasto'] as const;
+
+export interface RegisterPeriodExpensePaymentDto {
+  receiptNumber: string;
+  paymentDescription?: string | null;
+  paidAt?: string | null;
+}

@@ -8,15 +8,6 @@ import { MonthlySummaryDto } from '../../core/models';
 
 interface StatCard { label: string; value: string; icon: string; gradient: string; }
 
-const CARD_META = [
-  { icon: 'trending_up',     gradient: 'linear-gradient(135deg,#10b981,#059669)' },
-  { icon: 'trending_down',   gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)' },
-  { icon: 'account_balance', gradient: 'linear-gradient(135deg,#6366f1,#4f46e5)' },
-  { icon: 'receipt_long',    gradient: 'linear-gradient(135deg,#f59e0b,#d97706)' },
-  { icon: 'savings',         gradient: 'linear-gradient(135deg,#06b6d4,#0891b2)' },
-  { icon: 'payments',        gradient: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' },
-];
-
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -33,22 +24,27 @@ export class DashboardComponent implements OnInit {
   currentYear  = new Date().getFullYear();
   currentMonth = new Date().getMonth() + 1;
 
-  private readonly allEntries = computed<{ key: string; value: unknown }[]>(() => {
+  statCards = computed<StatCard[]>(() => {
     const s = this.summary();
     if (!s) return [];
-    return Object.entries(s).map(([key, value]) => ({ key, value }));
+    return [
+      { label: 'Ingresos',          value: this.fmt(s.totalIncomes),          icon: 'trending_up',     gradient: 'linear-gradient(135deg,#10b981,#059669)' },
+      { label: 'Gastos fijos',       value: this.fmt(s.totalFixedExpenses),    icon: 'home',            gradient: 'linear-gradient(135deg,#f43f5e,#e11d48)' },
+      { label: 'Gastos variables',   value: this.fmt(s.totalVariableExpenses), icon: 'receipt_long',    gradient: 'linear-gradient(135deg,#f59e0b,#d97706)' },
+      { label: 'Descuentos',         value: this.fmt(s.totalDiscounts),        icon: 'discount',        gradient: 'linear-gradient(135deg,#06b6d4,#0891b2)' },
+      { label: 'Balance final',      value: this.fmt(s.finalBalance),          icon: 'account_balance', gradient: 'linear-gradient(135deg,#6366f1,#4f46e5)' },
+      { label: 'Gasto diario prom.', value: this.fmt(s.averageDailyExpense),   icon: 'today',           gradient: 'linear-gradient(135deg,#8b5cf6,#7c3aed)' },
+    ];
   });
 
-  statCards = computed<StatCard[]>(() =>
-    this.allEntries().slice(0, 6).map((e, i) => ({
-      label:    e.key,
-      value:    this.formatValue(e.value),
-      icon:     CARD_META[i % CARD_META.length].icon,
-      gradient: CARD_META[i % CARD_META.length].gradient,
-    }))
-  );
-
-  extraEntries = computed(() => this.allEntries().slice(6));
+  categoryEntries = computed<{ key: string; value: string }[]>(() => {
+    const s = this.summary();
+    if (!s?.expensesByCategory) return [];
+    return Object.entries(s.expensesByCategory)
+      .filter(([, v]) => v > 0)
+      .sort(([, a], [, b]) => b - a)
+      .map(([key, value]) => ({ key, value: this.fmt(value) }));
+  });
 
   ngOnInit(): void { this.loadSummary(); }
 
@@ -60,8 +56,7 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  formatValue(value: unknown): string {
-    if (typeof value === 'number') return 'Gs. ' + value.toLocaleString('es-PY');
-    return String(value);
+  private fmt(value: number): string {
+    return 'Gs. ' + value.toLocaleString('es-PY');
   }
 }

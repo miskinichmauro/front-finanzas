@@ -1,59 +1,82 @@
 <app-page-header title="Gastos Fijos" subtitle="Gestión de gastos recurrentes mensuales" />
 
-<div class="flex justify-end mb-4">
-  <button mat-flat-button color="primary" (click)="openCreate()">
+<div class="page-toolbar">
+  <div class="toolbar-field">
+    <label>Buscar
+      <input type="search" [(ngModel)]="searchText" (input)="applyFilter()" placeholder="Busqueda" style="width: 200px" />
+    </label>
+  </div>
+  <button mat-flat-button class="btn-primary" style="margin-left:auto" (click)="openCreate()">
     <mat-icon>add</mat-icon> Nuevo Gasto Fijo
   </button>
 </div>
 
-@if (loading()) {
-  <div class="flex justify-center py-12"><mat-spinner /></div>
-} @else {
-  <div class="mat-elevation-z2 rounded-lg overflow-hidden">
-    <table mat-table [dataSource]="dataSource" matSort>
-      <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Descripción</th>
-        <td mat-cell *matCellDef="let row">{{ row.description }}</td>
-      </ng-container>
+<div class="table-card">
+  <div class="table-scroll">
+  <table mat-table [dataSource]="dataSource" matSort>
+    <ng-container matColumnDef="description">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Descripción</th>
+      <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+    </ng-container>
 
-      <ng-container matColumnDef="userName">
-        <th mat-header-cell *matHeaderCellDef>Usuario</th>
-        <td mat-cell *matCellDef="let row">{{ getUserName(row.userId) }}</td>
-      </ng-container>
+    <ng-container matColumnDef="userName">
+      <th mat-header-cell *matHeaderCellDef>Usuario</th>
+      <td mat-cell *matCellDef="let row">{{ getUserName(row.userId) }}</td>
+    </ng-container>
 
-      <ng-container matColumnDef="categoryName">
-        <th mat-header-cell *matHeaderCellDef>Categoría</th>
-        <td mat-cell *matCellDef="let row">{{ getCategoryName(row.categoryId) }}</td>
-      </ng-container>
+    <ng-container matColumnDef="categoryName">
+      <th mat-header-cell *matHeaderCellDef>Categoría</th>
+      <td mat-cell *matCellDef="let row">{{ getCategoryName(row.categoryId) }}</td>
+    </ng-container>
 
-      <ng-container matColumnDef="amount">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto</th>
-        <td mat-cell *matCellDef="let row" class="text-right">Gs. {{ formatAmount(row.amount) }}</td>
-      </ng-container>
+    <ng-container matColumnDef="amount">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto</th>
+      <td mat-cell *matCellDef="let row" class="text-right">Gs. {{ formatAmount(row.amount) }}</td>
+    </ng-container>
 
-      <ng-container matColumnDef="dueDay">
-        <th mat-header-cell *matHeaderCellDef>Vence día</th>
-        <td mat-cell *matCellDef="let row">{{ row.dueDay ?? '—' }}</td>
-      </ng-container>
+    <ng-container matColumnDef="dueDay">
+      <th mat-header-cell *matHeaderCellDef>Vence día</th>
+      <td mat-cell *matCellDef="let row">{{ row.dueDay ?? '—' }}</td>
+    </ng-container>
 
-      <ng-container matColumnDef="isActive">
-        <th mat-header-cell *matHeaderCellDef>Estado</th>
-        <td mat-cell *matCellDef="let row">
-          <mat-chip>{{ row.isActive ? 'Activo' : 'Inactivo' }}</mat-chip>
-        </td>
-      </ng-container>
+    <ng-container matColumnDef="isActive">
+      <th mat-header-cell *matHeaderCellDef>Estado</th>
+      <td mat-cell *matCellDef="let row">
+        <span [class]="'status-badge ' + (row.isActive ? 'badge-active' : 'badge-inactive')">{{ row.isActive ? 'Activo' : 'Inactivo' }}</span>
+      </td>
+    </ng-container>
 
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Acciones</th>
-        <td mat-cell *matCellDef="let row">
-          <button mat-icon-button color="primary" (click)="openEdit(row)"><mat-icon>edit</mat-icon></button>
-          <button mat-icon-button color="warn" (click)="openDelete(row)"><mat-icon>delete</mat-icon></button>
-        </td>
-      </ng-container>
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Acciones</th>
+      <td mat-cell *matCellDef="let row">
+        <button mat-icon-button color="primary" (click)="openEdit(row)"><mat-icon>edit</mat-icon></button>
+        <button mat-icon-button color="warn" (click)="openDelete(row)"><mat-icon>delete</mat-icon></button>
+      </td>
+    </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-    </table>
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    <tr *matNoDataRow>
+      <td [attr.colspan]="displayedColumns.length" class="empty-row-cell">
+        @if (loading()) {
+          <div class="loading-center"><mat-spinner /></div>
+        } @else {
+          <div class="empty-state">
+            <mat-icon>event_repeat</mat-icon>
+            <span>No hay gastos fijos registrados</span>
+          </div>
+        }
+      </td>
+    </tr>
+  </table>
+  </div>
+  <div class="table-footer">
+    @if (dataSource.data.length && !loading()) {
+      <div class="table-total-bar">
+        <span class="total-label">Total</span>
+        <span class="total-amount">Gs. {{ formatAmount(total) }}</span>
+      </div>
+    }
     <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons />
   </div>
-}
+</div>

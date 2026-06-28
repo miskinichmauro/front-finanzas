@@ -2,12 +2,10 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CategoriesService } from '../../core/services/categories.service';
+import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 import { CategoryDto } from '../../core/models';
 
 @Component({
@@ -17,10 +15,8 @@ import { CategoryDto } from '../../core/models';
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatButtonModule
+    MatButtonModule,
+    AppSelectComponent
   ],
   templateUrl: './category-form-dialog.component.html'
 })
@@ -52,8 +48,11 @@ export class CategoryFormDialogComponent implements OnInit {
     }
   }
 
+  saving = false;
+
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.saving) return;
+    this.saving = true;
     const value = this.form.value;
     const dto = {
       name: value.name!,
@@ -66,7 +65,7 @@ export class CategoryFormDialogComponent implements OnInit {
           this.snackBar.open('Categoría actualizada', 'Cerrar', { duration: 3000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 }); }
       });
     } else {
       this.categoriesService.create(dto).subscribe({
@@ -74,7 +73,7 @@ export class CategoryFormDialogComponent implements OnInit {
           this.snackBar.open('Categoría creada', 'Cerrar', { duration: 3000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 }); }
       });
     }
   }

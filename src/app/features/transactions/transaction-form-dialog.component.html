@@ -1,83 +1,74 @@
 <h2 mat-dialog-title>{{ isEdit ? 'Editar Transacción' : 'Nueva Transacción' }}</h2>
 <mat-dialog-content>
-  <form [formGroup]="form" class="flex flex-col gap-4 pt-2 min-w-96">
-    <mat-form-field appearance="outline">
-      <mat-label>Fecha</mat-label>
-      <input matInput [matDatepicker]="picker" formControlName="date" />
-      <mat-datepicker-toggle matIconSuffix [for]="picker" />
-      <mat-datepicker #picker />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Usuario</mat-label>
-      <mat-select formControlName="userId">
-        @for (u of users; track u.id) {
-          <mat-option [value]="u.id">{{ u.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Comercio (opcional)</mat-label>
-      <mat-select formControlName="commerceId">
-        <mat-option [value]="null">Sin comercio</mat-option>
-        @for (c of commerces; track c.id) {
-          <mat-option [value]="c.id">{{ c.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Categoría (opcional)</mat-label>
-      <mat-select formControlName="categoryId">
-        <mat-option [value]="null">Sin categoría</mat-option>
-        @for (c of categories; track c.id) {
-          <mat-option [value]="c.id">{{ c.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Medio de Pago (opcional)</mat-label>
-      <mat-select formControlName="paymentMethodId">
-        <mat-option [value]="null">Sin medio de pago</mat-option>
-        @for (p of paymentMethods; track p.id) {
-          <mat-option [value]="p.id">{{ p.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <div class="grid grid-cols-2 gap-4">
-      <mat-form-field appearance="outline">
-        <mat-label>Monto Bruto (Gs.)</mat-label>
-        <input matInput type="number" formControlName="grossAmount" (input)="onGrossAmountChange()" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Descuento (Gs.)</mat-label>
-        <input matInput type="number" formControlName="discountAmount" (input)="onGrossAmountChange()" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>% Descuento</mat-label>
-        <input matInput type="number" formControlName="discountPercent" />
-      </mat-form-field>
-
-      <mat-form-field appearance="outline">
-        <mat-label>Monto Neto (Gs.)</mat-label>
-        <input matInput type="number" formControlName="netAmount" />
-      </mat-form-field>
+  <form [formGroup]="form" class="dialog-form">
+    <div class="field-row">
+      <div class="field">
+        <label>Fecha
+          <input formControlName="date" type="date" />
+        </label>
+      </div>
+      @if (isAdmin()) {
+        <div class="field">
+          <label>Usuario
+            <app-select formControlName="userId" [items]="users"></app-select>
+          </label>
+        </div>
+      }
     </div>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Notas</mat-label>
-      <textarea matInput formControlName="notes" rows="2"></textarea>
-    </mat-form-field>
+    <div class="field">
+      <label>Descripción
+        <input formControlName="description" type="text" placeholder="Descripción de la transacción..." />
+      </label>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Comercio (opcional)
+          <app-select formControlName="commerceId" nullLabel="Sin comercio" [items]="commerces" labelKey="displayName"></app-select>
+        </label>
+      </div>
+      <div class="field">
+        <label>Categoría
+          <app-select formControlName="categoryId" [items]="categories"></app-select>
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <label>Medio de Pago (opcional)
+        <app-select formControlName="paymentMethodId" nullLabel="Sin medio de pago" [items]="paymentMethods" labelKey="displayName"></app-select>
+      </label>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Monto Bruto (Gs.)
+          <input formControlName="grossAmount" appThousands (input)="onGrossAmountChange()" />
+        </label>
+      </div>
+      <div class="field">
+        <label>% Descuento
+          <input formControlName="discountPercent" type="number" min="0" max="100" (input)="onDiscountPercentChange()" />
+        </label>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Descuento (Gs.)
+          <input formControlName="discountAmount" appThousands (input)="onDiscountAmountChange()" />
+        </label>
+      </div>
+      <div class="field">
+        <label>Monto Neto (Gs.)
+          <input formControlName="netAmount" appThousands />
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <label>Notas (opcional)
+        <textarea formControlName="notes" rows="2" placeholder="Observaciones..."></textarea>
+      </label>
+    </div>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancelar</button>
-  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
-    Guardar
-  </button>
+  <button mat-flat-button class="btn-primary" (click)="onSubmit()" [disabled]="form.invalid || saving">Guardar</button>
 </mat-dialog-actions>

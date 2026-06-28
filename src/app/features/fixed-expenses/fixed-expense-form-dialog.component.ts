@@ -2,12 +2,12 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
+import { ThousandsDirective } from '../../shared/directives/thousands.directive';
+import { AuthService } from '../../core/services/auth.service';
 import { FixedExpensesService } from '../../core/services/fixed-expenses.service';
 import { UsersService } from '../../core/services/users.service';
 import { CategoriesService } from '../../core/services/categories.service';
@@ -21,23 +21,25 @@ import { FixedExpenseDto, UserDto, CategoryDto, PaymentMethodDto } from '../../c
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
     MatButtonModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    AppSelectComponent,
+    ThousandsDirective
   ],
   templateUrl: './fixed-expense-form-dialog.component.html'
 })
 export class FixedExpenseFormDialogComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private fixedExpensesService = inject(FixedExpensesService);
-  private usersService = inject(UsersService);
-  private categoriesService = inject(CategoriesService);
-  private paymentMethodsService = inject(PaymentMethodsService);
-  private dialogRef = inject(MatDialogRef<FixedExpenseFormDialogComponent>);
-  private snackBar = inject(MatSnackBar);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly fixedExpensesService = inject(FixedExpensesService);
+  private readonly usersService = inject(UsersService);
+  private readonly categoriesService = inject(CategoriesService);
+  private readonly paymentMethodsService = inject(PaymentMethodsService);
+  private readonly dialogRef = inject(MatDialogRef<FixedExpenseFormDialogComponent>);
+  private readonly snackBar = inject(MatSnackBar);
   data = inject<FixedExpenseDto | null>(MAT_DIALOG_DATA);
+
+  readonly isAdmin = this.authService.isAdmin;
 
   users: UserDto[] = [];
   categories: CategoryDto[] = [];
@@ -57,7 +59,12 @@ export class FixedExpenseFormDialogComponent implements OnInit {
   get isEdit(): boolean { return !!this.data; }
 
   ngOnInit(): void {
-    this.usersService.getAll().subscribe(u => this.users = u);
+    if (this.isAdmin()) {
+      this.usersService.getAll().subscribe(u => this.users = u);
+    } else {
+      this.form.patchValue({ userId: this.authService.currentUser()?.userId ?? '' });
+      this.form.get('userId')?.disable();
+    }
     this.categoriesService.getAll().subscribe(c => this.categories = c);
     this.paymentMethodsService.getAll().subscribe(p => this.paymentMethods = p);
 
@@ -75,9 +82,12 @@ export class FixedExpenseFormDialogComponent implements OnInit {
     }
   }
 
+  saving = false;
+
   onSubmit(): void {
-    if (this.form.invalid) return;
-    const value = this.form.value;
+    if (this.form.invalid || this.saving) return;
+    this.saving = true;
+    const value = this.form.getRawValue();
     const dto = {
       userId: value.userId!,
       categoryId: value.categoryId!,
@@ -95,7 +105,7 @@ export class FixedExpenseFormDialogComponent implements OnInit {
           this.snackBar.open('Gasto fijo actualizado', 'Cerrar', { duration: 3000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 }); }
       });
     } else {
       this.fixedExpensesService.create(dto).subscribe({
@@ -103,7 +113,7 @@ export class FixedExpenseFormDialogComponent implements OnInit {
           this.snackBar.open('Gasto fijo creado', 'Cerrar', { duration: 3000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 }); }
       });
     }
   }

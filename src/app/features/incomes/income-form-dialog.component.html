@@ -1,48 +1,71 @@
 <h2 mat-dialog-title>{{ isEdit ? 'Editar Ingreso' : 'Nuevo Ingreso' }}</h2>
 <mat-dialog-content>
-  <form [formGroup]="form" class="flex flex-col gap-4 pt-2 min-w-96">
-    <mat-form-field appearance="outline">
-      <mat-label>Usuario</mat-label>
-      <mat-select formControlName="userId">
-        @for (u of users; track u.id) {
-          <mat-option [value]="u.id">{{ u.name }}</mat-option>
+  <form [formGroup]="form" class="dialog-form">
+    @if (isAdmin()) {
+      <div class="field-row">
+        <div class="field">
+          <label>Usuario
+            <app-select formControlName="userId" [items]="users"></app-select>
+          </label>
+        </div>
+        <div class="field">
+          <label>Categoría
+            <app-select formControlName="categoryId" [items]="categories"></app-select>
+          </label>
+        </div>
+      </div>
+    } @else {
+      <div class="field">
+        <label>Categoría
+          <app-select formControlName="categoryId" [items]="categories"></app-select>
+        </label>
+      </div>
+    }
+    <div class="field">
+      <label>Descripción
+        <input formControlName="description" placeholder="Ej: Sueldo junio" />
+      </label>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Monto (Gs.)
+          <input formControlName="amount" appThousands />
+        </label>
+      </div>
+      <div class="field">
+        <label>Fecha
+          <input formControlName="date" type="date" />
+        </label>
+      </div>
+    </div>
+
+    @if (isEditingRecurringSeries) {
+      <div class="series-update-box">
+        <mat-checkbox formControlName="isRecurring">Recurrente</mat-checkbox>
+        <div class="recurring-suboption">
+          <mat-checkbox [checked]="updateSeries" (change)="updateSeries = $event.checked">
+            Actualizar meses futuros de esta serie
+          </mat-checkbox>
+          @if (updateSeries) {
+            <p class="series-update-hint">
+              Se reemplazarán los ingresos de los meses siguientes con el nuevo monto.
+            </p>
+          }
+        </div>
+      </div>
+    } @else {
+      <mat-checkbox formControlName="isRecurring">
+        Recurrente
+        @if (!isEdit && form.get('isRecurring')?.value) {
+          <span class="recurring-hint">— se registrará en todos los meses restantes del año</span>
         }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Categoría (opcional)</mat-label>
-      <mat-select formControlName="categoryId">
-        <mat-option [value]="null">Sin categoría</mat-option>
-        @for (c of categories; track c.id) {
-          <mat-option [value]="c.id">{{ c.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Descripción</mat-label>
-      <input matInput formControlName="description" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Monto (Gs.)</mat-label>
-      <input matInput type="number" formControlName="amount" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Fecha</mat-label>
-      <input matInput [matDatepicker]="picker" formControlName="date" />
-      <mat-datepicker-toggle matIconSuffix [for]="picker" />
-      <mat-datepicker #picker />
-    </mat-form-field>
-
-    <mat-checkbox formControlName="isRecurring">Recurrente</mat-checkbox>
+      </mat-checkbox>
+    }
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancelar</button>
-  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
-    Guardar
+  <button mat-flat-button class="btn-primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
+    {{ isEdit ? 'Guardar' : 'Crear' }}
   </button>
 </mat-dialog-actions>

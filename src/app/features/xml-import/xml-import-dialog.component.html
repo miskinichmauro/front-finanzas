@@ -1,0 +1,259 @@
+<h2 mat-dialog-title>
+  {{ data.mode === 'transaction' ? 'Importar Factura como Transacción' : 'Importar Factura como Compromiso' }}
+</h2>
+
+<mat-dialog-content class="xml-dialog-content">
+
+  <section class="xml-section">
+    <div class="xml-upload-row">
+      <label class="xml-file-btn">
+        <mat-icon>upload_file</mat-icon>
+        {{ selectedFile ? selectedFile.name : 'Seleccionar archivo XML' }}
+        <input type="file" accept=".xml" (change)="onFileChange($event)" hidden />
+      </label>
+      @if (parsing()) {
+        <mat-spinner diameter="24" />
+      }
+    </div>
+  </section>
+
+  @if (invoice) {
+    <section class="xml-section xml-invoice-header">
+      <div class="xml-meta-grid">
+        <div class="xml-meta-item">
+          <span class="xml-meta-label">Emisor</span>
+          <span class="xml-meta-value">{{ invoice.emisor }}</span>
+        </div>
+        <div class="xml-meta-item">
+          <span class="xml-meta-label">Receptor</span>
+          <span class="xml-meta-value">{{ invoice.receptor }}</span>
+        </div>
+        <div class="xml-meta-item">
+          <span class="xml-meta-label">Fecha</span>
+          <span class="xml-meta-value">{{ formatDate(invoice.fechaEmision) }}</span>
+        </div>
+        <div class="xml-meta-item">
+          <span class="xml-meta-label">Total</span>
+          <span class="xml-meta-value xml-total">Gs. {{ formatAmount(invoice.totalGeneral) }}</span>
+        </div>
+        <div class="xml-meta-item xml-meta-full">
+          <span class="xml-meta-label">ID (CDC)</span>
+          <span class="xml-meta-value xml-cdc">{{ invoice.invoiceId }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="xml-section">
+      <div class="xml-group-friend-row">
+        <label class="xml-group-label">{{ isTransaction ? 'Grupo de Reparto (opcional)' : 'Grupo de Reparto' }}
+          <app-select
+            [(ngModel)]="selectedGroupId"
+            (ngModelChange)="onGroupChange()"
+            [items]="sharingGroups"
+            [nullLabel]="isTransaction ? 'Sin grupo' : null"
+            style="width: 220px">
+          </app-select>
+        </label>
+
+        @if (!isTransaction && selectedGroupId) {
+          <label class="xml-group-label">Quién Pagó
+            <app-select
+              [(ngModel)]="paidByUserId"
+              [items]="memberOptions"
+              valueKey="id"
+              labelKey="name"
+              style="width: 180px">
+            </app-select>
+          </label>
+
+          <label class="xml-group-label">Agregar amigo
+            <app-select
+              [(ngModel)]="friendPickerValue"
+              (ngModelChange)="onFriendSelected($event)"
+              [items]="availableFriendsToAdd"
+              valueKey="friendUserId"
+              labelKey="friendName"
+              nullLabel="Seleccionar..."
+              style="width: 200px">
+            </app-select>
+          </label>
+        }
+      </div>
+
+      @if (friendColumns.length > 0) {
+        <div class="friend-chips">
+          @for (fc of friendColumns; track fc.userId) {
+            <div class="friend-chip">
+              <span class="chip-name">{{ fc.name }}</span>
+              <span class="chip-sep">·</span>
+              <span class="chip-label">Cobra:</span>
+              <app-select
+                [(ngModel)]="fc.collectorUserId"
+                [items]="memberOptions"
+                valueKey="id"
+                labelKey="name"
+                style="width: 140px; display:inline-block">
+              </app-select>
+              <button class="chip-remove" (click)="removeFriend(fc.userId)" title="Quitar">×</button>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="xml-table-wrap">
+        <table class="xml-split-table">
+          <thead>
+            <tr>
+              <th class="col-nro">#</th>
+              <th class="col-desc">Descripción</th>
+              <th class="col-num">Cant.</th>
+              <th class="col-num">P. Unit.</th>
+              <th class="col-num">Total</th>
+              @if (selectedGroupId || isTransaction) {
+                <th class="col-member">
+                  <button class="member-assign-all" (click)="assignGroupAll()" title="Asignar todo al grupo">
+                    {{ selectedGroup?.name ?? 'Grupo' }}
+                  </button>
+                  <div class="percent-row">
+                    <input type="number" class="percent-input" min="0" max="100"
+                      placeholder="%" (input)="onGroupPercentInput($event)" />
+                  </div>
+                </th>
+              }
+              @for (fc of friendColumns; track fc.userId) {
+                <th class="col-member">
+                  <button class="member-assign-all" (click)="assignFriendAll(fc)" title="Asignar todo a {{ fc.name }}">
+                    {{ fc.name }}
+                  </button>
+                  <div class="percent-row">
+                    <input type="number" class="percent-input" min="0" max="100"
+                      placeholder="%" (input)="onFriendPercentInput(fc, $event)" />
+                  </div>
+                </th>
+              }
+              <th class="col-num">Resto</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of invoice.items; track item.nro; let i = $index) {
+              <tr>
+                <td class="col-nro">{{ item.nro }}</td>
+                <td class="col-desc">{{ item.descripcion }}</td>
+                <td class="col-num">{{ item.cantidad }}</td>
+                <td class="col-num">{{ formatAmount(item.precioUnitario) }}</td>
+                <td class="col-num col-total-cell">{{ formatAmount(item.total) }}</td>
+                @if (selectedGroupId || isTransaction) {
+                  <td class="col-member">
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      class="split-input"
+                      [value]="formatSplit(getGroupSplit(i))"
+                      (input)="onGroupSplitInput(i, $event)"
+                      (dblclick)="assignGroupItem(i)"
+                      title="Doble clic para asignar ítem completo al grupo" />
+                  </td>
+                }
+                @for (fc of friendColumns; track fc.userId) {
+                  <td class="col-member">
+                    <input
+                      type="text"
+                      inputmode="numeric"
+                      class="split-input"
+                      [value]="formatSplit(getFriendSplit(fc, i))"
+                      (input)="onFriendSplitInput(fc, i, $event)"
+                      (dblclick)="assignFriendItem(fc, i)"
+                      title="Doble clic para asignar ítem completo a {{ fc.name }}" />
+                  </td>
+                }
+                <td class="col-num" [class.resto-neg]="getRemainder(i) < 0" [class.resto-ok]="getRemainder(i) === 0">
+                  {{ formatAmount(getRemainder(i)) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4" class="footer-label">TOTAL</td>
+              <td class="col-num col-total-cell">{{ formatAmount(invoice.totalGeneral) }}</td>
+              @if (selectedGroupId || isTransaction) {
+                <td class="col-num col-member-total">{{ formatAmount(getGroupTotal()) }}</td>
+              }
+              @for (fc of friendColumns; track fc.userId) {
+                <td class="col-num col-member-total">{{ formatAmount(getFriendTotal(fc)) }}</td>
+              }
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="xml-split-actions">
+        <p class="xml-hint">Doble clic en celda para asignar el ítem completo. Clic en nombre de columna para asignar/limpiar todo.</p>
+        <button mat-button (click)="clearAll()"><mat-icon>clear_all</mat-icon> Limpiar todo</button>
+      </div>
+    </section>
+
+    <section class="xml-section">
+      <h3 class="xml-section-title">{{ isTransaction ? 'Datos de la Transacción' : 'Datos del Compromiso' }}</h3>
+      <div class="xml-tx-fields">
+        <div class="field">
+          <label>Comercio (opcional)
+            <app-select
+              [(ngModel)]="selectedCommerceId"
+              [items]="commerces"
+              labelKey="displayName"
+              nullLabel="Sin comercio">
+            </app-select>
+          </label>
+        </div>
+        <div class="field">
+          <label>Categoría
+            <app-select
+              [(ngModel)]="selectedCategoryId"
+              [items]="categories"
+              nullLabel="Sin categoría">
+            </app-select>
+          </label>
+        </div>
+        <div class="field">
+          <label>Medio de Pago {{ isTransaction ? '' : '(opcional)' }}
+            <app-select
+              [(ngModel)]="selectedPaymentMethodId"
+              [items]="paymentMethods"
+              labelKey="displayName"
+              nullLabel="Sin medio de pago">
+            </app-select>
+          </label>
+        </div>
+      </div>
+      <p class="xml-hint">
+        Se creará {{ isTransaction ? 'una transacción' : 'un compromiso' }} por
+        Gs. {{ formatAmount(isTransaction ? invoice.totalGeneral : getGroupTotal() || invoice.totalGeneral) }}.
+        @if (!isTransaction && friendColumns.length > 0) {
+          <span> + {{ friendColumns.length }} deuda{{ friendColumns.length > 1 ? 's' : '' }} con amigos.</span>
+        }
+      </p>
+    </section>
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  @if (invoice) {
+    <button mat-stroked-button (click)="downloadExcel()" [disabled]="downloading()">
+      <mat-icon>{{ downloading() ? 'hourglass_empty' : 'table_view' }}</mat-icon>
+      {{ downloading() ? '' : 'Excel' }}
+    </button>
+  }
+  @if (isTransaction) {
+    <button mat-flat-button class="btn-primary" (click)="createTransaction()" [disabled]="!canCreate || saving()">
+      @if (saving()) { <mat-spinner diameter="18" /> } @else { Crear Transacción }
+    </button>
+  } @else {
+    <button mat-flat-button class="btn-primary" (click)="createCommitment()" [disabled]="!canCreate || saving()">
+      @if (saving()) { <mat-spinner diameter="18" /> } @else { Crear Compromiso }
+    </button>
+  }
+</mat-dialog-actions>

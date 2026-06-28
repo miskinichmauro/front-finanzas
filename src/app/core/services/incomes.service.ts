@@ -28,6 +28,10 @@ export class IncomesService {
     return this.http.put<IncomeDto>(`${this.baseUrl}/${id}`, dto);
   }
 
+  updateSeries(id: string, dto: UpdateIncomeDto): Observable<IncomeDto> {
+    return this.http.put<IncomeDto>(`${this.baseUrl}/${id}/series`, dto);
+  }
+
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }

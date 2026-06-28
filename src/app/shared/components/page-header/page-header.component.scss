@@ -4,14 +4,14 @@
   &__title {
     font-size: 24px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
     margin: 0 0 4px;
     letter-spacing: -0.3px;
   }
 
   &__subtitle {
     font-size: 13.5px;
-    color: #64748b;
+    color: var(--text-muted);
     margin: 0;
   }
 }

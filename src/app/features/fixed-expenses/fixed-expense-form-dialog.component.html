@@ -1,60 +1,51 @@
 <h2 mat-dialog-title>{{ isEdit ? 'Editar Gasto Fijo' : 'Nuevo Gasto Fijo' }}</h2>
 <mat-dialog-content>
-  <form [formGroup]="form" class="flex flex-col gap-4 pt-2 min-w-96">
-    <mat-form-field appearance="outline">
-      <mat-label>Usuario</mat-label>
-      <mat-select formControlName="userId">
-        @for (u of users; track u.id) {
-          <mat-option [value]="u.id">{{ u.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Categoría</mat-label>
-      <mat-select formControlName="categoryId">
-        @for (c of categories; track c.id) {
-          <mat-option [value]="c.id">{{ c.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Medio de Pago (opcional)</mat-label>
-      <mat-select formControlName="paymentMethodId">
-        <mat-option [value]="null">Sin medio de pago</mat-option>
-        @for (p of paymentMethods; track p.id) {
-          <mat-option [value]="p.id">{{ p.name }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Descripción</mat-label>
-      <input matInput formControlName="description" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Monto (Gs.)</mat-label>
-      <input matInput type="number" formControlName="amount" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Día de vencimiento (opcional)</mat-label>
-      <input matInput type="number" formControlName="dueDay" min="1" max="31" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Notas</mat-label>
-      <textarea matInput formControlName="notes" rows="2"></textarea>
-    </mat-form-field>
-
+  <form [formGroup]="form" class="dialog-form">
+    <div class="field-row">
+      @if (isAdmin()) {
+        <div class="field">
+          <label>Usuario
+            <app-select formControlName="userId" [items]="users"></app-select>
+          </label>
+        </div>
+      }
+      <div class="field">
+        <label>Categoría (opcional)
+          <app-select formControlName="categoryId" nullLabel="Sin categoría" [items]="categories"></app-select>
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <label>Medio de Pago (opcional)
+        <app-select formControlName="paymentMethodId" nullLabel="Sin medio de pago" [items]="paymentMethods"></app-select>
+      </label>
+    </div>
+    <div class="field">
+      <label>Descripción
+        <input formControlName="description" placeholder="Ej: Alquiler" />
+      </label>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Monto (Gs.)
+          <input formControlName="amount" appThousands />
+        </label>
+      </div>
+      <div class="field">
+        <label>Vence día (opcional)
+          <input formControlName="dueDay" type="number" min="1" max="31" placeholder="1–31" />
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <label>Notas (opcional)
+        <textarea formControlName="notes" rows="2" placeholder="Observaciones..."></textarea>
+      </label>
+    </div>
     <mat-checkbox formControlName="isActive">Activo</mat-checkbox>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancelar</button>
-  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
-    Guardar
-  </button>
+  <button mat-flat-button class="btn-primary" (click)="onSubmit()" [disabled]="form.invalid || saving">Guardar</button>
 </mat-dialog-actions>

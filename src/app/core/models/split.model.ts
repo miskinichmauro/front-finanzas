@@ -2,8 +2,6 @@ export interface SplitBalanceDto {
   userId: string;
   userName: string;
   totalIncome: number;
-  totalEgresos: number;
-  totalOtherExpenses: number;
   totalFixedExpenses: number;
   availableBalance: number;
 }
@@ -16,11 +14,24 @@ export interface SplitShareDto {
 
 export interface SplitItemDto {
   id: string;
-  section: string;
+  categoryName: string;
   description: string;
   amount: number;
   percent: number;
+  paidByUserId: string | null;
+  paidByUserName: string | null;
+  isVariableBudget: boolean;
+  monthlyBudget: number | null;
+  actualAmount: number | null;
   shares: SplitShareDto[];
+}
+
+export interface SplitTransferDto {
+  fromUserId: string;
+  fromUserName: string;
+  toUserId: string;
+  toUserName: string;
+  amount: number;
 }
 
 export interface SplitTotalDto {
@@ -71,6 +82,7 @@ export interface SharedCommitmentSplitDto {
   adjustments: SplitAdjustmentDto[];
   carryOver: SplitCarryOverDto[];
   finalTotals: SplitFinalTotalDto[];
+  transfers: SplitTransferDto[];
 }
 
 export interface CreateSplitAdjustmentDto {

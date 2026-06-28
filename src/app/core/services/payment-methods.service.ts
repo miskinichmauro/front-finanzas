@@ -13,6 +13,10 @@ export class PaymentMethodsService {
     return this.http.get<PaymentMethodDto[]>(this.baseUrl);
   }
 
+  getTypes(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/types`);
+  }
+
   getById(id: string): Observable<PaymentMethodDto> {
     return this.http.get<PaymentMethodDto>(`${this.baseUrl}/${id}`);
   }

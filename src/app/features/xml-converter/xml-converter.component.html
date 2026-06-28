@@ -1,0 +1,38 @@
+<app-page-header title="XML a Excel" subtitle="Convertí una factura electrónica (e-kuatia) a planilla Excel" />
+
+<div class="converter-card">
+
+  <label class="drop-zone"
+         [class.drag-over]="isDragOver()"
+         [class.has-file]="selectedFile()"
+         (dragover)="onDragOver($event)"
+         (dragleave)="onDragLeave()"
+         (drop)="onDrop($event)">
+
+    <input type="file" accept=".xml" class="hidden-input" (change)="onFileSelected($event)" />
+
+    @if (!selectedFile()) {
+      <mat-icon class="drop-icon">upload_file</mat-icon>
+      <p class="drop-title">Arrastrá el XML acá o hacé click para seleccionar</p>
+      <p class="drop-sub">Solo archivos .xml de factura electrónica</p>
+    } @else {
+      <mat-icon class="drop-icon file-ready">task</mat-icon>
+      <p class="drop-title file-ready-text">{{ selectedFile()!.name }}</p>
+      <p class="drop-sub">{{ (selectedFile()!.size / 1024).toFixed(1) }} KB · Click para cambiar el archivo</p>
+    }
+  </label>
+
+  <div class="actions">
+    @if (selectedFile()) {
+      <button mat-button (click)="clear(); $event.stopPropagation()">
+        <mat-icon>close</mat-icon> Limpiar
+      </button>
+    }
+
+    <button mat-flat-button class="btn-primary" [disabled]="!selectedFile() || loading()" (click)="convert()">
+      <mat-icon>{{ loading() ? 'hourglass_empty' : 'table_view' }}</mat-icon>
+      {{ loading() ? 'Procesando...' : 'Convertir a Excel' }}
+    </button>
+  </div>
+
+</div>

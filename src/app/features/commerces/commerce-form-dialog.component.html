@@ -1,23 +1,20 @@
 <h2 mat-dialog-title>{{ isEdit ? 'Editar Comercio' : 'Nuevo Comercio' }}</h2>
 <mat-dialog-content>
-  <form [formGroup]="form" class="flex flex-col gap-4 pt-2">
-    <mat-form-field appearance="outline">
-      <mat-label>Nombre</mat-label>
-      <input matInput formControlName="name" placeholder="Nombre del comercio" />
-      @if (form.get('name')?.hasError('required')) {
-        <mat-error>El nombre es requerido</mat-error>
-      }
-    </mat-form-field>
-    <mat-form-field appearance="outline">
-      <mat-label>Dirección</mat-label>
-      <input matInput formControlName="address" placeholder="Dirección del comercio" />
-    </mat-form-field>
+  <form [formGroup]="form" class="dialog-form">
+    <div class="field">
+      <label>Nombre
+        <input formControlName="name" placeholder="Nombre del comercio" />
+      </label>
+    </div>
+    <div class="field">
+      <label>Dirección (opcional)
+        <input formControlName="address" placeholder="Dirección del comercio" />
+      </label>
+    </div>
     <mat-checkbox formControlName="isFavorite">Favorito</mat-checkbox>
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
   <button mat-button mat-dialog-close>Cancelar</button>
-  <button mat-flat-button color="primary" (click)="onSubmit()" [disabled]="form.invalid">
-    Guardar
-  </button>
+  <button mat-flat-button class="btn-primary" (click)="onSubmit()" [disabled]="form.invalid || saving">Guardar</button>
 </mat-dialog-actions>

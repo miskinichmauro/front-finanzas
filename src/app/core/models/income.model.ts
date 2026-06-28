@@ -6,6 +6,7 @@ export interface IncomeDto {
   amount: number;
   date: string;
   isRecurring: boolean;
+  recurringGroupId?: string;
 }
 
 export interface CreateIncomeDto {

@@ -1,0 +1,282 @@
+<app-page-header title="Pagos/Cobros Pendientes" />
+
+<div class="pp-toolbar">
+  <app-select
+    [(ngModel)]="viewMode"
+    (ngModelChange)="onViewModeChange()"
+    [items]="viewModes"
+    valueKey="value"
+    labelKey="label"
+    style="width: 190px">
+  </app-select>
+
+  <app-select
+    [(ngModel)]="filterYear"
+    (ngModelChange)="onFilterChange()"
+    [items]="years"
+    valueKey="value"
+    labelKey="label"
+    style="width: 90px"
+    [disabled]="allPeriods">
+  </app-select>
+
+  <app-select
+    [(ngModel)]="filterMonth"
+    (ngModelChange)="onFilterChange()"
+    [items]="months"
+    valueKey="value"
+    labelKey="label"
+    style="width: 130px"
+    [disabled]="allPeriods">
+  </app-select>
+
+  <label class="pp-check">
+    <input type="checkbox" [(ngModel)]="allPeriods" (ngModelChange)="onFilterChange()" />
+    Todos los períodos
+  </label>
+</div>
+
+@if (viewMode === 'owed-by-me') {
+
+  <section class="pp-section">
+    <h2 class="pp-section-title">Gastos del período</h2>
+
+    @if (loading()) {
+      <div class="pp-loading"><mat-spinner diameter="32" /></div>
+    } @else if (dataSource.data.length === 0) {
+      <p class="pp-empty">No hay pagos pendientes para este período.</p>
+    } @else {
+      <div class="table-card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="dataSource" matSort>
+
+            <ng-container matColumnDef="description">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Descripción</th>
+              <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="categoryName">
+              <th mat-header-cell *matHeaderCellDef>Categoría</th>
+              <td mat-cell *matCellDef="let row">{{ getCategoryName(row.categoryId) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="text-right">Monto</th>
+              <td mat-cell *matCellDef="let row" class="text-right col-amount">Gs. {{ formatAmount(row.amount) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="period">
+              <th mat-header-cell *matHeaderCellDef>Período</th>
+              <td mat-cell *matCellDef="let row">{{ getPeriod(row) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row" class="col-actions">
+                <button mat-stroked-button class="btn-action" (click)="openRegisterPayment(row)">
+                  <mat-icon>payment</mat-icon> Registrar pago
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+        <div class="table-footer">
+          <div class="table-total-bar">
+            <span class="total-label">Total pendiente</span>
+            <span class="total-amount">Gs. {{ formatAmount(periodTotal) }}</span>
+          </div>
+          <mat-paginator [pageSizeOptions]="[10, 25, 50]" pageSize="25" showFirstLastButtons />
+        </div>
+      </div>
+    }
+  </section>
+
+  <section class="pp-section">
+    <div class="pp-section-header">
+      <h2 class="pp-section-title">Deudas con amigos</h2>
+      <app-select
+        [(ngModel)]="statusFilter"
+        (ngModelChange)="loadData()"
+        [items]="statusOptions"
+        valueKey="value"
+        labelKey="label"
+        style="width: 200px">
+      </app-select>
+    </div>
+
+    @if (loadingDebts()) {
+      <div class="pp-loading"><mat-spinner diameter="32" /></div>
+    } @else if (debtDataSource.data.length === 0) {
+      <p class="pp-empty">No hay deudas con amigos para este período.</p>
+    } @else {
+      <div class="table-card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="debtDataSource">
+
+            <ng-container matColumnDef="debtDescription">
+              <th mat-header-cell *matHeaderCellDef>Descripción</th>
+              <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtCreditor">
+              <th mat-header-cell *matHeaderCellDef>Le debo a</th>
+              <td mat-cell *matCellDef="let row" class="col-person">{{ row.creditorUserName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtAmount">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Monto</th>
+              <td mat-cell *matCellDef="let row" class="text-right col-amount">Gs. {{ formatAmount(row.amount) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtDate">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let row">{{ formatDate(row.date) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtStatus">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-badge" [ngClass]="statusClass(row.status)">
+                  {{ statusLabel(row.status) }}
+                </span>
+                @if (row.status === 'Rejected' && row.rejectionReason) {
+                  <mat-icon class="info-icon" [matTooltip]="row.rejectionReason">info</mat-icon>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtActionsDebtor">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row" class="col-actions">
+                @if (row.status === 'Pending') {
+                  <button mat-stroked-button class="btn-action btn-accept" (click)="acceptDebt(row)">
+                    <mat-icon>check</mat-icon> Aceptar
+                  </button>
+                }
+                @if (row.status === 'Accepted' || row.status === 'Rejected') {
+                  <button mat-stroked-button class="btn-action" (click)="submitDebtPayment(row)">
+                    <mat-icon>payment</mat-icon> Registrar pago
+                  </button>
+                }
+                @if (row.status === 'AwaitingConfirmation') {
+                  <span class="awaiting-label">
+                    <mat-icon>hourglass_empty</mat-icon> Esperando confirmación
+                  </span>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="debtColumnsDebtor"></tr>
+            <tr mat-row *matRowDef="let row; columns: debtColumnsDebtor;"
+                [class.row-pending]="row.status === 'Pending'"
+                [class.row-rejected]="row.status === 'Rejected'"></tr>
+          </table>
+        </div>
+        <div class="table-footer">
+          <div class="table-total-bar">
+            <span class="total-label">Total deudas</span>
+            <span class="total-amount">Gs. {{ formatAmount(debtTotal) }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </section>
+}
+
+@if (viewMode === 'owed-to-me') {
+  <section class="pp-section">
+    <div class="pp-section-header">
+      <h2 class="pp-section-title">Deudas pendientes de cobro</h2>
+      <app-select
+        [(ngModel)]="statusFilter"
+        (ngModelChange)="onFilterChange()"
+        [items]="statusOptions"
+        valueKey="value"
+        labelKey="label"
+        style="width: 200px">
+      </app-select>
+      <button mat-stroked-button class="btn-new-debt" (click)="openCreateDebt()">
+        <mat-icon>add</mat-icon> Nueva Deuda
+      </button>
+    </div>
+
+    @if (loadingDebts()) {
+      <div class="pp-loading"><mat-spinner diameter="32" /></div>
+    } @else if (debtDataSource.data.length === 0) {
+      <p class="pp-empty">No hay deudas registradas a tu favor para este período.</p>
+    } @else {
+      <div class="table-card">
+        <div class="table-scroll">
+          <table mat-table [dataSource]="debtDataSource">
+
+            <ng-container matColumnDef="debtDescription">
+              <th mat-header-cell *matHeaderCellDef>Descripción</th>
+              <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtDebtor">
+              <th mat-header-cell *matHeaderCellDef>Deudor</th>
+              <td mat-cell *matCellDef="let row" class="col-person">{{ row.debtorUserName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtAmount">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Monto</th>
+              <td mat-cell *matCellDef="let row" class="text-right col-amount">Gs. {{ formatAmount(row.amount) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtDate">
+              <th mat-header-cell *matHeaderCellDef>Fecha</th>
+              <td mat-cell *matCellDef="let row">{{ formatDate(row.date) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtStatus">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="status-badge" [ngClass]="statusClass(row.status)">
+                  {{ statusLabel(row.status) }}
+                </span>
+                @if (row.status === 'AwaitingConfirmation' && row.paymentReference) {
+                  <mat-icon class="info-icon" [matTooltip]="'Comprobante: ' + row.paymentReference">receipt</mat-icon>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="debtActionsCreditor">
+              <th mat-header-cell *matHeaderCellDef></th>
+              <td mat-cell *matCellDef="let row" class="col-actions">
+                @if (row.status === 'AwaitingConfirmation') {
+                  <button mat-stroked-button class="btn-action btn-accept" (click)="confirmDebtPayment(row)"
+                          matTooltip="Confirmar pago recibido">
+                    <mat-icon>check_circle</mat-icon> Confirmar
+                  </button>
+                  <button mat-stroked-button class="btn-action btn-reject" (click)="rejectDebtPayment(row)"
+                          matTooltip="Rechazar comprobante">
+                    <mat-icon>cancel</mat-icon> Rechazar
+                  </button>
+                }
+                @if (row.status !== 'Paid' && row.status !== 'AwaitingConfirmation') {
+                  <button mat-icon-button class="btn-delete" (click)="deleteDebt(row)" matTooltip="Eliminar deuda">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="debtColumnsCreditor"></tr>
+            <tr mat-row *matRowDef="let row; columns: debtColumnsCreditor;"
+                [class.row-awaiting]="row.status === 'AwaitingConfirmation'"></tr>
+          </table>
+        </div>
+        <div class="table-footer">
+          <div class="table-total-bar">
+            <span class="total-label">Total a cobrar</span>
+            <span class="total-amount">Gs. {{ formatAmount(debtTotal) }}</span>
+          </div>
+        </div>
+      </div>
+    }
+  </section>
+}

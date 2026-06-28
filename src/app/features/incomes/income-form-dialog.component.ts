@@ -2,14 +2,12 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ThousandsDirective } from '../../shared/directives/thousands.directive';
+import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
+import { AuthService } from '../../core/services/auth.service';
 import { IncomesService } from '../../core/services/incomes.service';
 import { UsersService } from '../../core/services/users.service';
 import { CategoriesService } from '../../core/services/categories.service';
@@ -22,41 +20,50 @@ import { IncomeDto, UserDto, CategoryDto } from '../../core/models';
     CommonModule,
     ReactiveFormsModule,
     MatDialogModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
     MatButtonModule,
     MatCheckboxModule,
-    MatDatepickerModule,
-    MatNativeDateModule
+    AppSelectComponent,
+    ThousandsDirective
   ],
   templateUrl: './income-form-dialog.component.html'
 })
 export class IncomeFormDialogComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private incomesService = inject(IncomesService);
-  private usersService = inject(UsersService);
-  private categoriesService = inject(CategoriesService);
-  private dialogRef = inject(MatDialogRef<IncomeFormDialogComponent>);
-  private snackBar = inject(MatSnackBar);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly incomesService = inject(IncomesService);
+  private readonly usersService = inject(UsersService);
+  private readonly categoriesService = inject(CategoriesService);
+  private readonly dialogRef = inject(MatDialogRef<IncomeFormDialogComponent>);
+  private readonly snackBar = inject(MatSnackBar);
   data = inject<IncomeDto | null>(MAT_DIALOG_DATA);
+
+  readonly isAdmin = this.authService.isAdmin;
 
   users: UserDto[] = [];
   categories: CategoryDto[] = [];
+  updateSeries = false;
 
   form = this.fb.group({
     userId: ['', [Validators.required]],
-    categoryId: [null as string | null],
+    categoryId: [null as string | null, [Validators.required]],
     description: ['', [Validators.required]],
     amount: [0, [Validators.required, Validators.min(0)]],
-    date: [new Date(), [Validators.required]],
+    date: [new Date().toISOString().split('T')[0], [Validators.required]],
     isRecurring: [false]
   });
 
   get isEdit(): boolean { return !!this.data; }
+  get isEditingRecurringSeries(): boolean {
+    return this.isEdit && !!this.data?.isRecurring && !!this.data?.recurringGroupId;
+  }
 
   ngOnInit(): void {
-    this.usersService.getAll().subscribe(u => this.users = u);
+    if (this.isAdmin()) {
+      this.usersService.getAll().subscribe(u => this.users = u);
+    } else {
+      this.form.patchValue({ userId: this.authService.currentUser()?.userId ?? '' });
+      this.form.get('userId')?.disable();
+    }
     this.categoriesService.getAll().subscribe(c => this.categories = c);
 
     if (this.data) {
@@ -65,40 +72,50 @@ export class IncomeFormDialogComponent implements OnInit {
         categoryId: this.data.categoryId,
         description: this.data.description,
         amount: this.data.amount,
-        date: new Date(this.data.date),
+        date: this.data.date,
         isRecurring: this.data.isRecurring
       });
     }
   }
 
+  saving = false;
+
   onSubmit(): void {
-    if (this.form.invalid) return;
-    const value = this.form.value;
-    const dateVal = value.date instanceof Date ? value.date : new Date(value.date!);
+    if (this.form.invalid || this.saving) return;
+    this.saving = true;
+    const value = this.form.getRawValue();
     const dto = {
       userId: value.userId!,
-      categoryId: value.categoryId || undefined,
+      categoryId: value.categoryId!,
       description: value.description!,
       amount: value.amount ?? 0,
-      date: dateVal.toISOString().split('T')[0],
+      date: value.date!,
       isRecurring: value.isRecurring ?? false
     };
 
     if (this.isEdit) {
-      this.incomesService.update(this.data!.id, dto).subscribe({
+      const call = this.updateSeries
+        ? this.incomesService.updateSeries(this.data!.id, dto)
+        : this.incomesService.update(this.data!.id, dto);
+
+      call.subscribe({
         next: result => {
-          this.snackBar.open('Ingreso actualizado', 'Cerrar', { duration: 3000 });
+          const msg = this.updateSeries ? 'Serie actualizada' : 'Ingreso actualizado';
+          this.snackBar.open(msg, 'Cerrar', { duration: 3000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 }); }
       });
     } else {
       this.incomesService.create(dto).subscribe({
         next: result => {
-          this.snackBar.open('Ingreso creado', 'Cerrar', { duration: 3000 });
+          const msg = dto.isRecurring
+            ? 'Ingreso recurrente creado para todos los meses restantes del año'
+            : 'Ingreso creado';
+          this.snackBar.open(msg, 'Cerrar', { duration: 4000 });
           this.dialogRef.close(result);
         },
-        error: () => this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 })
+        error: () => { this.saving = false; this.snackBar.open('Error al crear', 'Cerrar', { duration: 3000 }); }
       });
     }
   }

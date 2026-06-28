@@ -4,9 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
@@ -20,12 +17,15 @@ import { SplitAdjustmentDialogComponent } from './split-adjustment-dialog.compon
 import { SplitService } from '../../core/services/split.service';
 import { SharingGroupsService } from '../../core/services/sharing-groups.service';
 import { UsersService } from '../../core/services/users.service';
+import { DebtsService } from '../../core/services/debts.service';
 import {
   SharedCommitmentSplitDto,
   SharingGroupDto,
   UserDto,
   SplitAdjustmentDto
 } from '../../core/models';
+import { DebtTotalByCreditorDto } from '../../core/models/debt.model';
+import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 
 @Component({
   selector: 'app-split-calculator',
@@ -36,14 +36,12 @@ import {
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatSelectModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatTableModule,
     MatProgressSpinnerModule,
     MatDividerModule,
     MatSlideToggleModule,
     MatTooltipModule,
+    AppSelectComponent,
     PageHeaderComponent
   ],
   templateUrl: './split-calculator.component.html'
@@ -52,6 +50,7 @@ export class SplitCalculatorComponent implements OnInit {
   private splitService = inject(SplitService);
   private sharingGroupsService = inject(SharingGroupsService);
   private usersService = inject(UsersService);
+  private readonly debtsService = inject(DebtsService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
@@ -71,10 +70,11 @@ export class SplitCalculatorComponent implements OnInit {
 
   loading = signal(false);
   splitData = signal<SharedCommitmentSplitDto | null>(null);
+  friendDebtTotals = signal<DebtTotalByCreditorDto[]>([]);
   isPaid = signal(false);
   savingStatus = signal(false);
 
-  balanceColumns = ['userName', 'totalIncome', 'totalEgresos', 'totalFixedExpenses', 'totalOtherExpenses', 'availableBalance'];
+  balanceColumns = ['userName', 'totalIncome', 'totalFixedExpenses', 'availableBalance'];
   itemColumns: string[] = [];
   totalColumns: string[] = [];
   finalTotalColumns: string[] = [];
@@ -94,12 +94,15 @@ export class SplitCalculatorComponent implements OnInit {
     }
 
     this.loading.set(true);
+    this.friendDebtTotals.set([]);
+
     this.splitService.calculateSplit(this.selectedGroupId, this.selectedYear, this.selectedMonth).subscribe({
       next: data => {
         this.splitData.set(data);
         this.isPaid.set(data.previousMonthIsPaid);
         this.buildDynamicColumns(data);
         this.loading.set(false);
+        this.loadFriendDebtTotals();
       },
       error: () => {
         this.snackBar.open('Error al calcular reparto', 'Cerrar', { duration: 3000 });
@@ -110,7 +113,7 @@ export class SplitCalculatorComponent implements OnInit {
 
   buildDynamicColumns(data: SharedCommitmentSplitDto): void {
     const userNames = data.balances.map(b => `share_${b.userId}`);
-    this.itemColumns = ['section', 'description', 'amount', 'percent', ...userNames];
+    this.itemColumns = ['categoryName', 'description', 'amount', 'percent', ...userNames];
     this.totalColumns = ['userName', 'availableBalance', 'totalAssigned', 'remainder'];
     this.finalTotalColumns = ['userName', 'proportionalAmount', 'adjustmentsTotal', 'carryOverTotal', 'finalAmount'];
   }
@@ -155,7 +158,7 @@ export class SplitCalculatorComponent implements OnInit {
         month: data.month,
         users: this.users
       },
-      width: '450px'
+      width: '480px'
     });
     ref.afterClosed().subscribe(result => { if (result) this.calculate(); });
   }
@@ -171,7 +174,7 @@ export class SplitCalculatorComponent implements OnInit {
         month: data.month,
         users: this.users
       },
-      width: '450px'
+      width: '480px'
     });
     ref.afterClosed().subscribe(result => { if (result) this.calculate(); });
   }
@@ -193,12 +196,24 @@ export class SplitCalculatorComponent implements OnInit {
     });
   }
 
-  getSectionGroups(data: SharedCommitmentSplitDto): { section: string; items: typeof data.items }[] {
+  private loadFriendDebtTotals(): void {
+    this.debtsService.getTotalsByCreditor(this.selectedYear, this.selectedMonth, this.selectedGroupId).subscribe({
+      next: totals => this.friendDebtTotals.set(totals),
+      error: () => {}
+    });
+  }
+
+  get friendDebtGrandTotal(): number {
+    return this.friendDebtTotals().reduce((s, t) => s + t.total, 0);
+  }
+
+  getSectionGroups(data: SharedCommitmentSplitDto): { categoryName: string; items: typeof data.items }[] {
     const grouped = new Map<string, typeof data.items>();
     for (const item of data.items) {
-      if (!grouped.has(item.section)) grouped.set(item.section, []);
-      grouped.get(item.section)!.push(item);
+      const key = item.categoryName || 'Sin categoría';
+      if (!grouped.has(key)) grouped.set(key, []);
+      grouped.get(key)!.push(item);
     }
-    return Array.from(grouped.entries()).map(([section, items]) => ({ section, items }));
+    return Array.from(grouped.entries()).map(([categoryName, items]) => ({ categoryName, items }));
   }
 }

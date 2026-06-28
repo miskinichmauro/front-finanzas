@@ -3,13 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { UserRole } from '../models';
 
 export interface AuthUser {
   userId:   string;
   userName: string;
   email:    string;
-  role:     string;
-  token:    string;
+  role:     UserRole;
 }
 
 const STORAGE_KEY = 'auth_user';
@@ -21,12 +21,13 @@ export class AuthService {
 
   private readonly _user = signal<AuthUser | null>(this.loadFromStorage());
 
-  readonly currentUser  = this._user.asReadonly();
-  readonly isLoggedIn   = computed(() => this._user() !== null);
-  readonly isAdmin      = computed(() => this._user()?.role === 'Admin');
+  readonly currentUser = this._user.asReadonly();
+  readonly isLoggedIn  = computed(() => this._user() !== null);
+  readonly isAdmin     = computed(() => this._user()?.role === UserRole.Admin);
 
   login(email: string, password: string) {
-    return this.http.post<AuthUser>(`${environment.apiUrl}/api/auth/login`, { email, password })
+    return this.http
+      .post<AuthUser>(`${environment.apiUrl}/api/auth/login`, { email, password }, { withCredentials: true })
       .pipe(tap(user => this.setUser(user)));
   }
 
@@ -34,10 +35,7 @@ export class AuthService {
     this._user.set(null);
     localStorage.removeItem(STORAGE_KEY);
     this.router.navigate(['/login']);
-  }
-
-  getToken(): string | null {
-    return this._user()?.token ?? null;
+    this.http.post(`${environment.apiUrl}/api/auth/logout`, {}, { withCredentials: true }).subscribe();
   }
 
   private setUser(user: AuthUser): void {

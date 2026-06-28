@@ -2,7 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { PeriodExpenseDto, CreatePeriodExpenseDto, UpdatePeriodExpenseDto } from '../models';
+import {
+  PeriodExpenseDto,
+  CreatePeriodExpenseDto,
+  UpdatePeriodExpenseDto,
+  RegisterPeriodExpensePaymentDto
+} from '../models/period-expense.model';
 
 @Injectable({ providedIn: 'root' })
 export class PeriodExpensesService {
@@ -18,6 +23,13 @@ export class PeriodExpensesService {
     return this.http.get<PeriodExpenseDto[]>(this.baseUrl, { params });
   }
 
+  getPending(year?: number, month?: number): Observable<PeriodExpenseDto[]> {
+    let params = new HttpParams();
+    if (year !== undefined) params = params.set('year', year.toString());
+    if (month !== undefined) params = params.set('month', month.toString());
+    return this.http.get<PeriodExpenseDto[]>(`${this.baseUrl}/pending`, { params });
+  }
+
   getById(id: string): Observable<PeriodExpenseDto> {
     return this.http.get<PeriodExpenseDto>(`${this.baseUrl}/${id}`);
   }
@@ -28,6 +40,10 @@ export class PeriodExpensesService {
 
   update(id: string, dto: UpdatePeriodExpenseDto): Observable<PeriodExpenseDto> {
     return this.http.put<PeriodExpenseDto>(`${this.baseUrl}/${id}`, dto);
+  }
+
+  registerPayment(id: string, dto: RegisterPeriodExpensePaymentDto): Observable<PeriodExpenseDto> {
+    return this.http.patch<PeriodExpenseDto>(`${this.baseUrl}/${id}/pay`, dto);
   }
 
   delete(id: string): Observable<void> {

@@ -1,6 +1,7 @@
 <mat-sidenav-container class="app-container">
 
-  <mat-sidenav #sidenav [mode]="isHandset() ? 'over' : 'side'" [opened]="!isHandset()" class="app-sidenav">
+  <mat-sidenav #sidenav [mode]="isHandset() ? 'over' : 'side'" [opened]="!isHandset()" class="app-sidenav"
+    (openedChange)="sidenavOpen.set($event)">
 
     <div class="sidenav-logo">
       <div class="logo-icon">
@@ -10,26 +11,35 @@
         <span class="logo-title">Finanzas</span>
         <span class="logo-sub">Panel personal</span>
       </div>
+      <button mat-icon-button class="sidenav-menu-btn" (click)="toggleSidenav()"
+        [style.opacity]="sidenavOpen() ? 1 : 0"
+        [style.pointer-events]="sidenavOpen() ? 'auto' : 'none'">
+        <mat-icon>menu</mat-icon>
+      </button>
     </div>
 
-    <nav class="sidenav-nav">
-      @for (group of navGroups; track group.label) {
-        <div class="nav-group">
-          <span class="nav-group-label">{{ group.label }}</span>
-          @for (item of group.items; track item.route) {
-            <a
-              class="nav-item"
-              [routerLink]="item.route"
-              routerLinkActive="nav-item--active"
-              (click)="isHandset() && sidenav.close()"
-            >
-              <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
-              <span class="nav-label">{{ item.label }}</span>
-            </a>
-          }
-        </div>
-      }
-    </nav>
+    <div class="sidenav-nav-wrap">
+      <nav class="sidenav-nav">
+        @for (group of navGroups; track group.label) {
+          <div class="nav-group">
+            <span class="nav-group-label">{{ group.label }}</span>
+            @for (item of group.items; track item.route) {
+              @if (!item.adminOnly || isAdmin()) {
+                <a
+                  class="nav-item"
+                  [routerLink]="item.route"
+                  routerLinkActive="nav-item--active"
+                  (click)="closeOnMobile()"
+                >
+                  <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
+                  <span class="nav-label">{{ item.label }}</span>
+                </a>
+              }
+            }
+          </div>
+        }
+      </nav>
+    </div>
 
     <div class="sidenav-footer">
       <mat-icon class="text-slate-500 text-sm">info</mat-icon>
@@ -40,12 +50,11 @@
   <mat-sidenav-content class="app-content">
 
     <header class="app-topbar">
-      @if (isHandset()) {
-        <button mat-icon-button (click)="sidenav.toggle()" class="menu-btn">
-          <mat-icon>menu</mat-icon>
-        </button>
-      }
-      <div class="topbar-title">{{ currentPageTitle() }}</div>
+      <button mat-icon-button class="menu-btn" (click)="toggleSidenav()"
+        [style.opacity]="sidenavOpen() ? 0 : 1"
+        [style.pointer-events]="sidenavOpen() ? 'none' : 'auto'">
+        <mat-icon>menu</mat-icon>
+      </button>
       <div class="topbar-spacer"></div>
 
       <div class="topbar-user">
@@ -56,6 +65,10 @@
         </div>
         <button mat-icon-button class="logout-btn" (click)="logout()" title="Cerrar sesión">
           <mat-icon>logout</mat-icon>
+        </button>
+        <button mat-icon-button class="theme-btn" (click)="theme.toggle()"
+                [title]="theme.isDark() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
+          <mat-icon>{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
         </button>
       </div>
     </header>

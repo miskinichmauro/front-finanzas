@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar' : 'Nuevo' }} Préstamo / Ahorro</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" class="dialog-form">
+    <div class="field-row">
+      <div class="field">
+        <label>Tipo
+          <app-select formControlName="type" [items]="loanTypes" valueKey="value" labelKey="label"></app-select>
+        </label>
+      </div>
+      @if (isAdmin()) {
+        <div class="field">
+          <label>Usuario
+            <app-select formControlName="userId" [items]="users"></app-select>
+          </label>
+        </div>
+      }
+    </div>
+    <div class="field">
+      <label>Nombre
+        <input formControlName="name" placeholder="Ej: Préstamo UENO" />
+      </label>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Monto total (Gs.)
+          <input formControlName="totalAmount" appThousands />
+        </label>
+      </div>
+      <div class="field">
+        <label>Monto por cuota (Gs.)
+          <input formControlName="installmentAmount" appThousands />
+        </label>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Cant. de cuotas{{ isEdit ? ' (fijo)' : '' }}
+          <input formControlName="totalInstallments" type="number" min="1" />
+        </label>
+      </div>
+      <div class="field">
+        <label>Fecha 1° cuota{{ isEdit ? ' (fija)' : '' }}
+          <input formControlName="firstDueDate" type="date" />
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <label>Notas (opcional)
+        <textarea formControlName="notes" rows="2" placeholder="Observaciones..."></textarea>
+      </label>
+    </div>
+    @if (isEdit) {
+      <mat-checkbox formControlName="isActive">Activo</mat-checkbox>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-flat-button class="btn-primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
+    {{ isEdit ? 'Guardar' : 'Crear' }}
+  </button>
+</mat-dialog-actions>

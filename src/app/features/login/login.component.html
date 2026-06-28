@@ -9,28 +9,38 @@
   </div>
 
   <div class="login-form-panel">
+    <button mat-icon-button class="theme-btn" type="button" (click)="theme.toggle()"
+            [attr.aria-label]="theme.isDark() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'"
+            [title]="theme.isDark() ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'">
+      <mat-icon>{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
     <div class="login-card">
       <h2 class="login-card__title">Bienvenido de nuevo</h2>
       <p class="login-card__sub">Ingresá tus credenciales para acceder al panel</p>
 
       <form (ngSubmit)="submit()" #f="ngForm" class="login-form">
 
-        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" [(ngModel)]="email" name="email" autocomplete="email" />
-          <mat-icon matPrefix>email</mat-icon>
-        </mat-form-field>
+        <div class="field">
+          <label>Email
+            <input type="text" [(ngModel)]="email" name="email"
+                   autocomplete="username" placeholder="tu@email.com" />
+          </label>
+        </div>
 
-        <mat-form-field appearance="outline" class="w-full" subscriptSizing="dynamic">
-          <mat-label>Contraseña</mat-label>
-          <input matInput [type]="showPass() ? 'text' : 'password'"
-                 [(ngModel)]="password" name="password"
-                 [attr.autocomplete]="showPass() ? 'off' : 'current-password'" />
-          <mat-icon matPrefix>lock</mat-icon>
-          <button mat-icon-button matSuffix type="button" (click)="showPass.set(!showPass())">
-            <mat-icon>{{ showPass() ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-        </mat-form-field>
+        <div class="field">
+          <label>Contraseña
+            <div class="pass-wrapper">
+              <input [type]="showPass() ? 'text' : 'password'"
+                     [(ngModel)]="password" name="password"
+                     [attr.autocomplete]="showPass() ? 'off' : 'current-password'"
+                     placeholder="••••••••" />
+              <button type="button" class="toggle-pass" (click)="showPass.set(!showPass())">
+                <mat-icon>{{ showPass() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+          </label>
+        </div>
 
         @if (error()) {
           <div class="login-error">
