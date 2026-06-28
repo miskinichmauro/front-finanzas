@@ -66,12 +66,13 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #64748b;
+  color: var(--text-muted);
   margin-bottom: 12px;
 }
 
 .detail-card {
-  background: white;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 16px 20px;
   display: flex;
@@ -81,13 +82,13 @@
 
   &__key {
     font-size: 13.5px;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   &__val {
     font-size: 14px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-primary);
   }
 }
 
@@ -120,13 +121,13 @@
   &__title {
     font-size: 18px;
     font-weight: 700;
-    color: #1e293b;
+    color: var(--text-primary);
     margin: 0 0 8px;
   }
 
   &__sub {
     font-size: 14px;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin: 0;
   }
 }

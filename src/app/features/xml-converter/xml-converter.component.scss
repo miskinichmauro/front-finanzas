@@ -1,6 +1,6 @@
 .converter-card {
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 32px;
   max-width: 600px;
@@ -10,7 +10,7 @@
 }
 
 label.drop-zone {
-  border: 2px dashed #cbd5e1;
+  border: 2px dashed var(--border-input);
   border-radius: 12px;
   padding: 48px 32px;
   display: flex;
@@ -19,24 +19,24 @@ label.drop-zone {
   gap: 8px;
   cursor: pointer;
   transition: all 0.2s;
-  background: #f8fafc;
+  background: var(--bg-surface-alt);
   user-select: none;
 
   &:hover {
     border-color: #6366f1;
-    background: #f5f3ff;
+    background: var(--bg-hover);
   }
 
   &.drag-over {
     border-color: #6366f1;
-    background: #ede9fe;
+    background: color-mix(in srgb, #6366f1 14%, var(--bg-surface));
     transform: scale(1.01);
   }
 
   &.has-file {
     border-color: #10b981;
     border-style: solid;
-    background: #f0fdf4;
+    background: color-mix(in srgb, #10b981 12%, var(--bg-surface));
   }
 }
 
@@ -48,7 +48,7 @@ label.drop-zone {
   font-size: 52px;
   width: 52px;
   height: 52px;
-  color: #94a3b8;
+  color: var(--text-subtle);
 
   &.file-ready {
     color: #10b981;
@@ -58,19 +58,19 @@ label.drop-zone {
 .drop-title {
   font-size: 15px;
   font-weight: 600;
-  color: #334155;
+  color: var(--text-secondary);
   margin: 0;
   text-align: center;
 
   &.file-ready-text {
-    color: #065f46;
+    color: #059669;
     word-break: break-all;
   }
 }
 
 .drop-sub {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin: 0;
   text-align: center;
 }

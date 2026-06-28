@@ -43,6 +43,8 @@ html[data-theme='dark'] {
   --text-secondary: #334155;
   --text-muted:     #64748b;
   --text-subtle:    #94a3b8;
+  --accent-text:    #4338ca;
+  --accent-border:  #c7d2fe;
 
   --sidebar-bg:     #0f172a;
   --sidebar-fade:   #0f172a;
@@ -74,6 +76,8 @@ html[data-theme='dark'] {
   --text-secondary: #e2e8f0;
   --text-muted:     #94a3b8;
   --text-subtle:    #475569;
+  --accent-text:    #a5b4fc;
+  --accent-border:  #4f46e5;
 
   --sidebar-bg:     #060a14;
   --sidebar-fade:   #060a14;
@@ -232,7 +236,7 @@ app-page-header {
     min-height: 0;
     overflow: auto;
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+    scrollbar-color: var(--border-input) transparent;
   }
 
   table {
@@ -427,7 +431,7 @@ app-page-header {
       background-position: right 14px center;
       padding-right: 36px;
 
-      &:hover:not(:disabled) { border-color: #94a3b8; }
+      &:hover:not(:disabled) { border-color: var(--text-subtle); }
     }
 
     > textarea {
@@ -513,7 +517,7 @@ app-page-header {
       background-position: right 10px center;
       padding-right: 28px;
 
-      &:hover:not(:disabled) { border-color: #94a3b8; }
+      &:hover:not(:disabled) { border-color: var(--text-subtle); }
     }
   }
 }
@@ -644,7 +648,7 @@ mat-dialog-content {
   overflow-y: auto;
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: var(--border-input) transparent;
 }
 
 mat-dialog-actions {

@@ -3,7 +3,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--text-muted);
   margin-bottom: 8px;
 
   &.mt-section {
@@ -14,14 +14,15 @@
 .loan-accordion {
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
 
   ::ng-deep .mat-expansion-panel {
     box-shadow: none !important;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-surface);
 
     &:last-child { border-bottom: none; }
-    &.mat-expanded { background: #fafbff; }
+    &.mat-expanded { background: var(--bg-surface-alt); }
   }
 }
 
@@ -34,12 +35,12 @@
   .loan-name {
     font-weight: 600;
     font-size: 14px;
-    color: #1e293b;
+    color: var(--text-primary);
   }
 
   .loan-user {
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--text-muted);
   }
 }
 
@@ -64,7 +65,7 @@
 
     .cuotas-text {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-muted);
     }
   }
 
@@ -86,7 +87,7 @@
   max-height: 480px;
   overflow-y: auto;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   margin-top: 4px;
 }
 
@@ -98,35 +99,35 @@
   th {
     position: sticky;
     top: 0;
-    background: #f8fafc;
+    background: var(--bg-surface-alt);
     padding: 8px 12px;
     text-align: left;
     font-weight: 600;
     font-size: 11px;
     letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: #64748b;
-    border-bottom: 1px solid #e2e8f0;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
   }
 
   td {
     padding: 7px 12px;
-    border-bottom: 1px solid #f1f5f9;
-    color: #334155;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
     vertical-align: middle;
   }
 
   tr:last-child td { border-bottom: none; }
 
   tr.row-paid td {
-    color: #94a3b8;
+    color: var(--text-subtle);
     text-decoration-line: none;
   }
 
   .col-num {
     width: 50px;
     font-variant-numeric: tabular-nums;
-    color: #94a3b8;
+    color: var(--text-subtle);
     font-weight: 600;
   }
 

@@ -13,7 +13,7 @@
 .xml-section-title {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text-secondary);
   margin: 0 0 12px;
 }
 
@@ -50,8 +50,8 @@
 }
 
 .xml-invoice-header {
-  background: #f0f9ff;
-  border: 1.5px solid #bae6fd;
+  background: color-mix(in srgb, #0ea5e9 10%, var(--bg-surface));
+  border: 1.5px solid color-mix(in srgb, #0ea5e9 35%, var(--border));
   border-radius: 12px;
   padding: 16px;
 }
@@ -77,12 +77,12 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .xml-meta-value {
   font-size: 13px;
-  color: #1e293b;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
@@ -95,7 +95,7 @@
 .xml-cdc {
   font-family: monospace;
   font-size: 12px;
-  color: #475569;
+  color: var(--text-secondary);
   word-break: break-all;
 }
 
@@ -113,7 +113,7 @@
   gap: 4px;
   font-size: 13px;
   font-weight: 500;
-  color: #374151;
+  color: var(--text-secondary);
 }
 
 .friend-chips {
@@ -128,20 +128,20 @@
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
+  background: color-mix(in srgb, #6366f1 12%, var(--bg-surface));
+  border: 1px solid color-mix(in srgb, #6366f1 30%, var(--border));
   border-radius: 8px;
   font-size: 13px;
 
-  .chip-name { font-weight: 600; color: #4338ca; }
-  .chip-sep  { color: #a5b4fc; }
-  .chip-label { color: #6b7280; font-size: 12px; }
+  .chip-name { font-weight: 600; color: var(--accent-text); }
+  .chip-sep  { color: var(--accent-border); }
+  .chip-label { color: var(--text-muted); font-size: 12px; }
 
   .chip-remove {
     background: none;
     border: none;
     cursor: pointer;
-    color: #9ca3af;
+    color: var(--text-subtle);
     font-size: 16px;
     line-height: 1;
     padding: 0 2px;
@@ -152,7 +152,7 @@
 
 .xml-table-wrap {
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
   border-radius: 10px;
 }
 
@@ -163,14 +163,14 @@
 
   th, td {
     padding: 7px 10px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border-light);
     white-space: nowrap;
   }
 
   thead th {
-    background: #f8fafc;
+    background: var(--bg-surface-alt);
     font-weight: 600;
-    color: #374151;
+    color: var(--text-secondary);
     font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -179,23 +179,23 @@
     z-index: 1;
   }
 
-  tbody tr:hover { background: #f8fafc; }
+  tbody tr:hover { background: var(--bg-hover); }
   tbody tr:last-child td { border-bottom: none; }
 
   tfoot td {
     font-weight: 700;
-    background: #f8fafc;
-    border-top: 2px solid #e2e8f0;
+    background: var(--bg-surface-alt);
+    border-top: 2px solid var(--border);
     border-bottom: none;
   }
 }
 
-.col-nro  { width: 36px; text-align: center; color: #94a3b8; }
+.col-nro  { width: 36px; text-align: center; color: var(--text-subtle); }
 .col-desc { min-width: 200px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
 .col-num  { text-align: right; }
-.col-total-cell { font-weight: 600; color: #1e293b; }
+.col-total-cell { font-weight: 600; color: var(--text-primary); }
 .col-member { min-width: 110px; text-align: right; }
-.col-member-total { color: #4338ca; font-weight: 700; }
+.col-member-total { color: var(--accent-text); font-weight: 700; }
 
 .member-assign-all {
   background: none;
@@ -203,12 +203,12 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
-  color: #4338ca;
+  color: var(--accent-text);
   padding: 2px 4px;
   border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  &:hover { background: #eef2ff; }
+  &:hover { background: var(--bg-hover); }
 }
 
 .percent-row {
@@ -221,32 +221,32 @@
   width: 56px;
   height: 22px;
   padding: 0 4px;
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--accent-border);
   border-radius: 4px;
   font-size: 12px;
   text-align: right;
   font-family: inherit;
-  background: #eef2ff;
-  color: #4338ca;
+  background: color-mix(in srgb, #6366f1 12%, var(--bg-surface));
+  color: var(--accent-text);
   font-weight: 500;
   &:focus { outline: none; border-color: #6366f1; }
   &::-webkit-inner-spin-button,
   &::-webkit-outer-spin-button { opacity: 1; }
 }
 
-.footer-label { text-align: right; color: #374151; }
+.footer-label { text-align: right; color: var(--text-secondary); }
 
 .split-input {
   width: 100px;
   height: 30px;
   padding: 0 6px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-input);
   border-radius: 6px;
   font-size: 13px;
   text-align: right;
   font-family: inherit;
-  background: white;
-  color: #1e293b;
+  background: var(--bg-input);
+  color: var(--text-primary);
   &:focus { outline: none; border-color: #6366f1; }
 }
 
@@ -270,13 +270,13 @@
       gap: 4px;
       font-size: 13px;
       font-weight: 500;
-      color: #374151;
+      color: var(--text-secondary);
     }
   }
 }
 
 .xml-hint {
   font-size: 12px;
-  color: #64748b;
+  color: var(--text-muted);
   margin: 8px 0 0;
 }
