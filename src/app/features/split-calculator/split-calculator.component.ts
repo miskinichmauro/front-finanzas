@@ -1,18 +1,15 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { SplitAdjustmentDialogComponent } from './split-adjustment-dialog.component';
 import { SplitService } from '../../core/services/split.service';
 import { SharingGroupsService } from '../../core/services/sharing-groups.service';
@@ -22,10 +19,12 @@ import {
   SharedCommitmentSplitDto,
   SharingGroupDto,
   UserDto,
-  SplitAdjustmentDto
+  SplitAdjustmentDto,
+  SplitItemDto
 } from '../../core/models';
 import { DebtTotalByCreditorDto } from '../../core/models/debt.model';
 import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
+import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
 @Component({
   selector: 'app-split-calculator',
@@ -33,18 +32,16 @@ import { AppSelectComponent } from '../../shared/components/app-select/app-selec
   imports: [
     CommonModule,
     FormsModule,
-    MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTableModule,
     MatProgressSpinnerModule,
-    MatDividerModule,
     MatSlideToggleModule,
-    MatTooltipModule,
     AppSelectComponent,
+    RowActionsComponent,
     PageHeaderComponent
   ],
-  templateUrl: './split-calculator.component.html'
+  templateUrl: './split-calculator.component.html',
+  styleUrl: './split-calculator.component.scss'
 })
 export class SplitCalculatorComponent implements OnInit {
   private splitService = inject(SplitService);
@@ -54,10 +51,10 @@ export class SplitCalculatorComponent implements OnInit {
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
-  sharingGroups: SharingGroupDto[] = [];
-  users: UserDto[] = [];
+  sharingGroups: SharingGroupDto[] = null as any;
+  users: UserDto[] = null as any;
 
-  selectedGroupId = '';
+  selectedGroupId: string | null = null;
   selectedYear = new Date().getFullYear();
   selectedMonth = new Date().getMonth() + 1;
 
@@ -74,17 +71,14 @@ export class SplitCalculatorComponent implements OnInit {
   isPaid = signal(false);
   savingStatus = signal(false);
 
-  balanceColumns = ['userName', 'totalIncome', 'totalFixedExpenses', 'availableBalance'];
-  itemColumns: string[] = [];
-  totalColumns: string[] = [];
-  finalTotalColumns: string[] = [];
-
   ngOnInit(): void {
-    this.sharingGroupsService.getAll().subscribe(g => {
-      this.sharingGroups = g;
-      if (g.length > 0) this.selectedGroupId = g[0].id;
-    });
+    this.sharingGroupsService.getAll().subscribe(g => this.sharingGroups = g);
     this.usersService.getAll().subscribe(u => this.users = u);
+  }
+
+  onGroupChange(): void {
+    this.splitData.set(null);
+    this.friendDebtTotals.set([]);
   }
 
   calculate(): void {
@@ -100,7 +94,6 @@ export class SplitCalculatorComponent implements OnInit {
       next: data => {
         this.splitData.set(data);
         this.isPaid.set(data.previousMonthIsPaid);
-        this.buildDynamicColumns(data);
         this.loading.set(false);
         this.loadFriendDebtTotals();
       },
@@ -111,23 +104,20 @@ export class SplitCalculatorComponent implements OnInit {
     });
   }
 
-  buildDynamicColumns(data: SharedCommitmentSplitDto): void {
-    const userNames = data.balances.map(b => `share_${b.userId}`);
-    this.itemColumns = ['categoryName', 'description', 'amount', 'percent', ...userNames];
-    this.totalColumns = ['userName', 'availableBalance', 'totalAssigned', 'remainder'];
-    this.finalTotalColumns = ['userName', 'proportionalAmount', 'adjustmentsTotal', 'carryOverTotal', 'finalAmount'];
-  }
-
-  getShareForUser(shares: { userId: string; userName: string; amount: number }[], userId: string): number {
-    return shares.find(s => s.userId === userId)?.amount ?? 0;
-  }
-
   formatGs(amount: number): string {
-    return `Gs. ${amount.toLocaleString('es-PY')}`;
+    return `Gs. ${formatDisplayedAmount(amount)}`;
   }
 
   getMonthLabel(month: number): string {
     return this.months.find(m => m.value === month)?.label ?? '';
+  }
+
+  getCommitmentTypeLabel(isVariableBudget: boolean): string {
+    return isVariableBudget ? 'Por categoría' : 'Fijo';
+  }
+
+  getCommitmentCalculationLabel(item: SplitItemDto): string {
+    return item.isVariableBudget ? 'Gasto real + presupuesto del mes' : 'Monto manual cargado';
   }
 
   onPaidToggleChange(checked: boolean): void {
@@ -197,7 +187,7 @@ export class SplitCalculatorComponent implements OnInit {
   }
 
   private loadFriendDebtTotals(): void {
-    this.debtsService.getTotalsByCreditor(this.selectedYear, this.selectedMonth, this.selectedGroupId).subscribe({
+    this.debtsService.getTotalsByCreditor(this.selectedYear, this.selectedMonth, this.selectedGroupId ?? undefined).subscribe({
       next: totals => this.friendDebtTotals.set(totals),
       error: () => {}
     });

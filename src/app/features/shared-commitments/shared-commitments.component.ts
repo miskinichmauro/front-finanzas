@@ -15,8 +15,11 @@ import { SharedCommitmentFormDialogComponent } from './shared-commitment-form-di
 import { XmlImportDialogComponent } from '../xml-import/xml-import-dialog.component';
 import { SharedCommitmentsService } from '../../core/services/shared-commitments.service';
 import { SharingGroupsService } from '../../core/services/sharing-groups.service';
+import { XmlParseService } from '../../core/services/xml-parse.service';
 import { SharedCommitmentDto, SharingGroupDto } from '../../core/models';
 import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
+import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
 @Component({
   selector: 'app-shared-commitments',
@@ -31,24 +34,27 @@ import { AppSelectComponent } from '../../shared/components/app-select/app-selec
     MatIconModule,
     MatProgressSpinnerModule,
     AppSelectComponent,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './shared-commitments.component.html'
 })
 export class SharedCommitmentsComponent implements OnInit {
   private sharedCommitmentsService = inject(SharedCommitmentsService);
   private sharingGroupsService = inject(SharingGroupsService);
+  private xmlParseService = inject(XmlParseService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
   @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
   @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
-  displayedColumns = ['description', 'categoryName', 'groupName', 'amount', 'isActive', 'actions'];
+  displayedColumns = ['type', 'description', 'categoryName', 'groupName', 'budgetAmount', 'discountAmount', 'grossAmount', 'netAmount', 'isActive', 'actions'];
   loading = signal(false);
+  importingXml = signal(false);
   dataSource = new MatTableDataSource<SharedCommitmentDto>([]);
-  sharingGroups: SharingGroupDto[] = [];
-  selectedGroupId = '';
+  sharingGroups: SharingGroupDto[] = null as any;
+  selectedGroupId: string | null = null;
   searchText = '';
 
   get total(): number {
@@ -58,20 +64,19 @@ export class SharedCommitmentsComponent implements OnInit {
   ngOnInit(): void {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
-    this.sharingGroupsService.getAll().subscribe(g => {
-      this.sharingGroups = g;
-      if (g.length > 0) {
-        this.selectedGroupId = g[0].id;
-        this.loadData();
-      }
-    });
+    this.sharingGroupsService.getAll().subscribe(g => this.sharingGroups = g);
   }
 
   loadData(): void {
+    if (!this.selectedGroupId) {
+      this.loading.set(false);
+      this.dataSource.data = [];
+      return;
+    }
+
     this.loading.set(true);
     this.dataSource.data = [];
-    const groupId = this.selectedGroupId || undefined;
-    this.sharedCommitmentsService.getAll(groupId, true).subscribe({
+    this.sharedCommitmentsService.getAll(this.selectedGroupId, true).subscribe({
       next: data => {
         this.dataSource.data = data;
         this.loading.set(false);
@@ -83,26 +88,60 @@ export class SharedCommitmentsComponent implements OnInit {
     });
   }
 
+  onGroupChange(): void {
+    if (this.dataSource.paginator) {
+      this.dataSource.paginator.firstPage();
+    }
+    this.loadData();
+  }
+
   applyFilter(): void {
     this.dataSource.filter = this.searchText.trim().toLowerCase();
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
   }
 
   getGroupName(groupId: string): string {
-    return this.sharingGroups.find(g => g.id === groupId)?.name ?? '—';
+    return (this.sharingGroups ?? []).find(g => g.id === groupId)?.name ?? '—';
+  }
+
+  getCommitmentTypeLabel(row: Pick<SharedCommitmentDto, 'isVariableBudget'>): string {
+    return row.isVariableBudget ? 'Por categoría' : 'Fijo';
+  }
+
+  getBudgetAmount(row: Pick<SharedCommitmentDto, 'isVariableBudget' | 'monthlyBudget' | 'grossAmount'>): number | null {
+    return row.isVariableBudget ? (row.monthlyBudget ?? row.grossAmount) : null;
   }
 
   formatAmount(amount: number): string {
-    return amount.toLocaleString('es-PY');
+    return formatDisplayedAmount(amount);
   }
 
   openXmlImport(): void {
-    this.dialog.open(XmlImportDialogComponent, {
-      data: { mode: 'commitment' },
-      width: '95vw',
-      maxWidth: '1100px',
-      maxHeight: '95vh'
-    });
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xml';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      this.importingXml.set(true);
+      this.xmlParseService.parseXml(file).subscribe({
+        next: invoice => {
+          this.importingXml.set(false);
+          const ref = this.dialog.open(XmlImportDialogComponent, {
+            data: { mode: 'commitment', initialFile: file, initialInvoice: invoice },
+            width: '95vw',
+            maxWidth: '1100px',
+            maxHeight: '95vh'
+          });
+          ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
+        },
+        error: () => {
+          this.importingXml.set(false);
+          this.snackBar.open('Error al procesar el XML', 'Cerrar', { duration: 3000 });
+        }
+      });
+    };
+    input.click();
   }
 
   openCreate(): void {
@@ -132,3 +171,5 @@ export class SharedCommitmentsComponent implements OnInit {
     });
   }
 }
+
+

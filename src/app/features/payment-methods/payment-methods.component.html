@@ -1,4 +1,4 @@
-<app-page-header title="Medios de Pago" subtitle="Gestión de tarjetas y métodos de pago" />
+﻿<app-page-header title="Medios de Pago" subtitle="Gestión de tarjetas y métodos de pago" />
 
 <div class="page-toolbar">
   <div class="toolbar-field">
@@ -6,8 +6,9 @@
       <input type="search" [(ngModel)]="searchText" (input)="applyFilter()" placeholder="Busqueda" style="width: 200px" />
     </label>
   </div>
-  <button mat-flat-button class="btn-primary" style="margin-left:auto" (click)="openCreate()">
-    <mat-icon>add</mat-icon> Nuevo Medio de Pago
+  <div class="flex-1"></div>
+  <button mat-flat-button class="btn-primary" (click)="openCreate()">
+    <mat-icon>add</mat-icon>Nuevo Medio de Pago
   </button>
 </div>
 
@@ -17,11 +18,6 @@
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
       <td mat-cell *matCellDef="let row">{{ row.name }}</td>
-    </ng-container>
-
-    <ng-container matColumnDef="type">
-      <th mat-header-cell *matHeaderCellDef>Tipo</th>
-      <td mat-cell *matCellDef="let row">{{ row.type }}</td>
     </ng-container>
 
     <ng-container matColumnDef="bankName">
@@ -37,15 +33,18 @@
     <ng-container matColumnDef="isActive">
       <th mat-header-cell *matHeaderCellDef>Estado</th>
       <td mat-cell *matCellDef="let row">
-        <span [class]="'status-badge ' + (row.isActive ? 'badge-active' : 'badge-inactive')">{{ row.isActive ? 'Activo' : 'Inactivo' }}</span>
+        <span class="badge" [ngClass]="row.isActive ? 'badge--green' : 'badge--red'">{{ row.isActive ? 'Activo' : 'Inactivo' }}</span>
       </td>
     </ng-container>
 
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef>Acciones</th>
       <td mat-cell *matCellDef="let row">
-        <button mat-icon-button color="primary" (click)="openEdit(row)"><mat-icon>edit</mat-icon></button>
-        <button mat-icon-button color="warn" (click)="openDelete(row)"><mat-icon>delete</mat-icon></button>
+        <app-row-actions
+          editTooltip="Editar medio de pago"
+          deleteTooltip="Eliminar medio de pago"
+          (editAction)="openEdit(row)"
+          (deleteAction)="openDelete(row)" />
       </td>
     </ng-container>
 

@@ -12,8 +12,8 @@ import { CommonModule } from '@angular/common';
     multi: true
   }],
   template: `
-    <div class="asel" [class.asel--open]="open()" [class.asel--disabled]="isDisabled">
-      <button type="button" class="asel__trigger" (click)="toggle()">
+    <div class="asel" [class.asel--open]="open()" [class.asel--disabled]="componentDisabled">
+      <button type="button" class="asel__trigger" [disabled]="componentDisabled" (click)="toggle()">
         <span class="asel__value" [class.asel__value--placeholder]="isPlaceholder()">{{ displayLabel() }}</span>
         <svg class="asel__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <polyline points="6 9 12 15 18 9"/>
@@ -61,21 +61,23 @@ import { CommonModule } from '@angular/common';
       &__trigger {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         width: 100%;
-        height: 42px;
-        padding: 0 12px 0 14px;
+        height: calc(28px * var(--ui-scale));
+        padding: 0 calc(8px * var(--ui-scale)) 0 calc(10px * var(--ui-scale));
         border: 1.5px solid var(--border-input);
-        border-radius: 10px;
+        border-radius: calc(7px * var(--ui-scale));
         background: var(--bg-input);
-        font-size: 14px;
+        font-size: calc(11.5px * var(--ui-scale));
         font-weight: 400;
         font-family: Roboto, "Helvetica Neue", sans-serif;
         color: var(--text-primary);
         cursor: pointer;
         transition: border-color 0.15s, box-shadow 0.15s;
         text-align: left;
-        gap: 8px;
+        gap: calc(6px * var(--ui-scale));
         box-sizing: border-box;
+        line-height: 1;
         &:hover { border-color: var(--text-subtle); }
       }
 
@@ -93,6 +95,8 @@ import { CommonModule } from '@angular/common';
 
       &__value {
         flex: 1;
+        display: flex;
+        align-items: center;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -100,8 +104,8 @@ import { CommonModule } from '@angular/common';
       }
 
       &__arrow {
-        width: 16px;
-        height: 16px;
+        width: calc(14px * var(--ui-scale));
+        height: calc(14px * var(--ui-scale));
         color: var(--text-muted);
         flex-shrink: 0;
         transition: transform 0.15s;
@@ -113,22 +117,23 @@ import { CommonModule } from '@angular/common';
         z-index: 9999;
         background: var(--bg-surface);
         border: 1px solid var(--border);
-        border-radius: 12px;
+        border-radius: calc(12px * var(--ui-scale));
         box-shadow: var(--dialog-shadow);
         overflow: hidden;
-        min-width: 160px;
+        min-width: calc(160px * var(--ui-scale));
       }
 
       &__search {
-        padding: 8px 8px 4px;
+        padding: calc(4px * var(--ui-scale)) calc(4px * var(--ui-scale)) calc(3px * var(--ui-scale));
         border-bottom: 1px solid var(--border-light);
         input {
           width: 100%;
-          height: 34px;
-          padding: 0 10px;
+          height: calc(26px * var(--ui-scale));
+          padding: 0 calc(7px * var(--ui-scale));
+          line-height: calc(26px * var(--ui-scale));
           border: 1.5px solid var(--border-input);
-          border-radius: 8px;
-          font-size: 13px;
+          border-radius: calc(7px * var(--ui-scale));
+          font-size: calc(11px * var(--ui-scale));
           font-weight: 400;
           font-family: Roboto, "Helvetica Neue", sans-serif;
           color: var(--text-primary);
@@ -140,9 +145,9 @@ import { CommonModule } from '@angular/common';
       }
 
       &__options {
-        max-height: 220px;
+        max-height: calc(180px * var(--ui-scale));
         overflow-y: auto;
-        padding: 4px;
+        padding: calc(3px * var(--ui-scale));
       }
 
       &__option {
@@ -150,22 +155,33 @@ import { CommonModule } from '@angular/common';
         align-items: center;
         justify-content: space-between;
         width: 100%;
-        min-height: 38px;
-        padding: 0 10px;
+        min-height: calc(38px * var(--ui-scale));
+        padding: calc(6px * var(--ui-scale)) calc(10px * var(--ui-scale));
         border: none;
-        border-radius: 8px;
+        border-radius: calc(7px * var(--ui-scale));
         background: transparent;
-        font-size: 14px;
+        font-size: calc(11.5px * var(--ui-scale));
         font-weight: 400;
         font-family: Roboto, "Helvetica Neue", sans-serif;
         color: var(--text-primary);
         cursor: pointer;
         text-align: left;
-        gap: 8px;
+        gap: calc(6px * var(--ui-scale));
         transition: background 0.1s, color 0.1s;
 
-        span { flex: 1; text-align: left; }
-        svg { width: 16px; height: 16px; color: #6366f1; flex-shrink: 0; }
+        span {
+          flex: 1;
+          text-align: left;
+          white-space: normal;
+          line-height: 1.25;
+        }
+        svg {
+          width: calc(14px * var(--ui-scale));
+          height: calc(14px * var(--ui-scale));
+          color: #6366f1;
+          flex-shrink: 0;
+          margin-top: calc(2px * var(--ui-scale));
+        }
 
         &:hover { background: var(--bg-hover); }
 
@@ -179,8 +195,8 @@ import { CommonModule } from '@angular/common';
       }
 
       &__empty {
-        padding: 12px 10px;
-        font-size: 13px;
+        padding: calc(9px * var(--ui-scale)) calc(8px * var(--ui-scale));
+        font-size: calc(11px * var(--ui-scale));
         color: var(--text-subtle);
         text-align: center;
       }
@@ -188,13 +204,18 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class AppSelectComponent implements ControlValueAccessor {
-  @Input() set items(v: any[]) { this._items.set(v || []); }
+  @Input() set items(v: any[] | null | undefined) {
+    this.itemsReady.set(v !== null && v !== undefined);
+    this._items.set(v ?? []);
+  }
+  @Input() loading = false;
   @Input() valueKey = 'id';
   @Input() labelKey = 'name';
   @Input() placeholder = 'Seleccionar...';
   @Input() nullLabel: string | null = null;
 
   private readonly _items = signal<any[]>([]);
+  private readonly itemsReady = signal(false);
   value = signal<any>(null);
   isDisabled = false;
   open = signal(false);
@@ -202,11 +223,16 @@ export class AppSelectComponent implements ControlValueAccessor {
   panelTop = '0px';
   panelLeft = '0px';
   panelWidth = '0px';
+  private readonly estimatedPanelHeight = 300;
 
   private onChange: (v: any) => void = () => {};
   private onTouched: () => void = () => {};
 
   constructor(private readonly el: ElementRef) {}
+
+  get componentDisabled(): boolean {
+    return this.isDisabled || this.loading || !this.itemsReady();
+  }
 
   filteredItems = computed(() => {
     const s = this.normalize(this.searchText());
@@ -250,10 +276,15 @@ export class AppSelectComponent implements ControlValueAccessor {
   }
 
   toggle(): void {
-    if (this.isDisabled) return;
+    if (this.componentDisabled) return;
     if (!this.open()) {
       const rect = (this.el.nativeElement.querySelector('.asel__trigger') as HTMLElement).getBoundingClientRect();
-      this.panelTop = `${rect.bottom + 4}px`;
+      const belowSpace = window.innerHeight - rect.bottom;
+      const aboveSpace = rect.top;
+      const shouldOpenUp = belowSpace < this.estimatedPanelHeight && aboveSpace > belowSpace;
+      this.panelTop = shouldOpenUp
+        ? `${Math.max(8, rect.top - this.estimatedPanelHeight - 4)}px`
+        : `${rect.bottom + 4}px`;
       this.panelLeft = `${rect.left}px`;
       this.panelWidth = `${rect.width}px`;
     }
@@ -281,3 +312,7 @@ export class AppSelectComponent implements ControlValueAccessor {
     if (!this.el.nativeElement.contains(e.target)) this.open.set(false);
   }
 }
+
+
+
+

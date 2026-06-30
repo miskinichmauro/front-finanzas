@@ -1,4 +1,4 @@
-<app-page-header title="Transacciones" subtitle="Registro de compras y pagos" />
+﻿<app-page-header title="Gastos del Periodo" subtitle="Registro de compras y pagos" />
 
 <div class="page-toolbar">
   <div class="toolbar-field">
@@ -21,11 +21,22 @@
     </label>
   </div>
   <div style="margin-left:auto; display:flex; gap:8px">
-    <button mat-stroked-button (click)="openXmlImport()">
-      <mat-icon>file_upload</mat-icon> Importar XML
+    <button mat-stroked-button class="btn-import-xml" (click)="openXmlImport()" [disabled]="importingXml()">
+      @if (importingXml()) {
+        <span class="btn-import-xml__loading">
+          <mat-spinner diameter="16" />
+        </span>
+        <span class="btn-import-xml__content btn-import-xml__content--hidden">
+          <mat-icon>file_upload</mat-icon><span>Importar XML</span>
+        </span>
+      } @else {
+        <span class="btn-import-xml__content">
+          <mat-icon>file_upload</mat-icon><span>Importar XML</span>
+        </span>
+      }
     </button>
     <button mat-flat-button class="btn-primary" (click)="openCreate()">
-      <mat-icon>add</mat-icon> Nueva Transacción
+      <mat-icon>add</mat-icon>Nuevo Gasto
     </button>
   </div>
 </div>
@@ -58,6 +69,11 @@
       <td mat-cell *matCellDef="let row" class="text-right">Gs. {{ formatAmount(row.grossAmount) }}</td>
     </ng-container>
 
+    <ng-container matColumnDef="discountPercent">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>% Descuento</th>
+      <td mat-cell *matCellDef="let row" class="text-right">{{ row.discountPercent }}%</td>
+    </ng-container>
+
     <ng-container matColumnDef="netAmount">
       <th mat-header-cell *matHeaderCellDef>Monto Neto</th>
       <td mat-cell *matCellDef="let row" class="text-right font-medium">Gs. {{ formatAmount(row.netAmount) }}</td>
@@ -66,8 +82,11 @@
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef>Acciones</th>
       <td mat-cell *matCellDef="let row">
-        <button mat-icon-button color="primary" (click)="openEdit(row)"><mat-icon>edit</mat-icon></button>
-        <button mat-icon-button color="warn" (click)="openDelete(row)"><mat-icon>delete</mat-icon></button>
+        <app-row-actions
+          editTooltip="Editar transacción"
+          deleteTooltip="Eliminar transacción"
+          (editAction)="openEdit(row)"
+          (deleteAction)="openDelete(row)" />
       </td>
     </ng-container>
 
@@ -80,7 +99,7 @@
         } @else {
           <div class="empty-state">
             <mat-icon>shopping_cart</mat-icon>
-            <span>No hay transacciones en este período</span>
+            <span>No hay gastos en este período</span>
           </div>
         }
       </td>

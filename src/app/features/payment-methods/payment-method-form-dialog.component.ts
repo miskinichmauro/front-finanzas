@@ -6,7 +6,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PaymentMethodsService } from '../../core/services/payment-methods.service';
-import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 import { PaymentMethodDto } from '../../core/models';
 
 @Component({
@@ -17,8 +16,7 @@ import { PaymentMethodDto } from '../../core/models';
     ReactiveFormsModule,
     MatDialogModule,
     MatButtonModule,
-    MatCheckboxModule,
-    AppSelectComponent
+    MatCheckboxModule
   ],
   templateUrl: './payment-method-form-dialog.component.html'
 })
@@ -28,12 +26,8 @@ export class PaymentMethodFormDialogComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<PaymentMethodFormDialogComponent>);
   private snackBar = inject(MatSnackBar);
   data = inject<PaymentMethodDto | null>(MAT_DIALOG_DATA);
-
-  paymentTypes: string[] = [];
-
   form = this.fb.group({
     name: ['', [Validators.required]],
-    type: ['', [Validators.required]],
     bankName: [''],
     lastDigits: [''],
     isActive: [true]
@@ -42,12 +36,9 @@ export class PaymentMethodFormDialogComponent implements OnInit {
   get isEdit(): boolean { return !!this.data; }
 
   ngOnInit(): void {
-    this.paymentMethodsService.getTypes().subscribe(types => this.paymentTypes = types);
-
     if (this.data) {
       this.form.patchValue({
         name: this.data.name,
-        type: this.data.type,
         bankName: this.data.bankName,
         lastDigits: this.data.lastDigits,
         isActive: this.data.isActive
@@ -63,7 +54,6 @@ export class PaymentMethodFormDialogComponent implements OnInit {
     const value = this.form.value;
     const dto = {
       name: value.name!,
-      type: value.type!,
       bankName: value.bankName ?? '',
       lastDigits: value.lastDigits ?? '',
       isActive: value.isActive ?? true

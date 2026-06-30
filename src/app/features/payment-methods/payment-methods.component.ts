@@ -10,6 +10,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { PaymentMethodFormDialogComponent } from './payment-method-form-dialog.component';
 import { PaymentMethodsService } from '../../core/services/payment-methods.service';
@@ -27,7 +28,8 @@ import { PaymentMethodDto } from '../../core/models';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './payment-methods.component.html'
 })
@@ -39,7 +41,7 @@ export class PaymentMethodsComponent implements OnInit {
   @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
   @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
-  displayedColumns = ['name', 'type', 'bankName', 'lastDigits', 'isActive', 'actions'];
+  displayedColumns = ['name', 'bankName', 'lastDigits', 'isActive', 'actions'];
   loading = signal(false);
   dataSource = new MatTableDataSource<PaymentMethodDto>([]);
   searchText = '';

@@ -11,6 +11,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { CommerceFormDialogComponent } from './commerce-form-dialog.component';
 import { CommercesService } from '../../core/services/commerces.service';
@@ -29,7 +30,8 @@ import { CommerceDto } from '../../core/models';
     MatIconModule,
     MatProgressSpinnerModule,
     MatChipsModule,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './commerces.component.html'
 })

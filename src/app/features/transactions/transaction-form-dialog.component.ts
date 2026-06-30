@@ -41,10 +41,10 @@ export class TransactionFormDialogComponent implements OnInit {
 
   readonly isAdmin = this.authService.isAdmin;
 
-  users: UserDto[] = [];
-  categories: CategoryDto[] = [];
-  paymentMethods: (PaymentMethodDto & { displayName: string })[] = [];
-  commerces: (CommerceDto & { displayName: string })[] = [];
+  users: UserDto[] = null as any;
+  categories: CategoryDto[] = null as any;
+  paymentMethods: (PaymentMethodDto & { displayName: string })[] = null as any;
+  commerces: (CommerceDto & { displayName: string })[] = null as any;
 
   form = this.fb.group({
     date: [new Date().toISOString().split('T')[0], [Validators.required]],

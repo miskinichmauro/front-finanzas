@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>{{ isEdit ? 'Editar Compromiso' : 'Nuevo Compromiso Compartido' }}</h2>
+<h2 mat-dialog-title>{{ isEdit ? 'Editar Compromiso Compartido' : 'Nuevo Compromiso Compartido' }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="dialog-form">
     <div class="field-row">
@@ -13,11 +13,22 @@
         </label>
       </div>
     </div>
+
+    <div class="field">
+      <label>Tipo de compromiso
+        <app-select formControlName="isVariableBudget" [items]="commitmentTypeOptions"></app-select>
+      </label>
+      <div style="margin-top: 6px; font-size: 12px; color: var(--text-secondary); line-height: 1.35;">
+        {{ commitmentTypeHint }}
+      </div>
+    </div>
+
     <div class="field">
       <label>Descripción
-        <input formControlName="description" type="text" placeholder="Ej: Netflix" />
+        <input formControlName="description" type="text" [placeholder]="isVariableBudget ? 'Ej: Presupuesto supermercado del mes' : 'Ej: Netflix'" />
       </label>
     </div>
+
     <div class="field-row">
       <div class="field">
         <label>Comercio (opcional)
@@ -25,45 +36,67 @@
         </label>
       </div>
       <div class="field">
-        <label>Categoría
+        <label>{{ categoryLabel }}
           <app-select formControlName="categoryId" [items]="categories"></app-select>
         </label>
       </div>
     </div>
+
+    @if (isVariableBudget) {
+      <div class="field-row">
+        <div class="field">
+          <label>Presupuesto del mes (Gs.)
+            <input formControlName="monthlyBudget" appThousands placeholder="Ej: 500.000" />
+          </label>
+        </div>
+        <div class="field">
+          <label>Categoría destino
+            <app-select formControlName="linkedCategoryId" nullLabel="Seleccionar..." [items]="categories"></app-select>
+          </label>
+        </div>
+      </div>
+      <div style="margin: -2px 0 10px; font-size: 12px; color: var(--text-secondary); line-height: 1.35;">
+        El sistema compara el gasto destino del mes contra esta categoría y usa el presupuesto configurado para calcular el reparto.
+      </div>
+    } @else {
+      <div class="field-row">
+        <div class="field">
+          <label>Monto bruto (Gs.)
+            <input formControlName="grossAmount" appThousands (input)="onGrossAmountChange()" placeholder="Ej: 250.000" />
+          </label>
+        </div>
+        <div class="field">
+          <label>% descuento
+            <input formControlName="discountPercent" type="number" min="0" max="100" (input)="onDiscountPercentChange()" placeholder="Ej: 10" />
+          </label>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Descuento (Gs.)
+            <input formControlName="discountAmount" appThousands (input)="onDiscountAmountChange()" placeholder="Ej: 25.000" />
+          </label>
+        </div>
+        <div class="field">
+          <label>Monto neto (Gs.)
+            <input formControlName="netAmount" appThousands readonly />
+          </label>
+        </div>
+      </div>
+    }
+
     <div class="field">
-      <label>Medio de Pago (opcional)
+      <label>Medio de pago (opcional)
         <app-select formControlName="paymentMethodId" nullLabel="Sin medio de pago" [items]="paymentMethods" labelKey="displayName"></app-select>
       </label>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Monto Bruto (Gs.)
-          <input formControlName="grossAmount" appThousands (input)="onGrossAmountChange()" />
-        </label>
-      </div>
-      <div class="field">
-        <label>% Descuento
-          <input formControlName="discountPercent" type="number" min="0" max="100" (input)="onDiscountPercentChange()" />
-        </label>
-      </div>
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Descuento (Gs.)
-          <input formControlName="discountAmount" appThousands (input)="onDiscountAmountChange()" />
-        </label>
-      </div>
-      <div class="field">
-        <label>Monto Neto (Gs.)
-          <input formControlName="netAmount" appThousands />
-        </label>
-      </div>
-    </div>
+
     <div class="field">
       <label>Notas (opcional)
         <textarea formControlName="notes" rows="2" placeholder="Observaciones..."></textarea>
       </label>
     </div>
+
     <div class="field-row">
       <div class="field">
         <label>¿Quién paga? (opcional)
@@ -76,22 +109,8 @@
         </label>
       </div>
     </div>
+
     <mat-checkbox formControlName="isActive">Activo</mat-checkbox>
-    <mat-checkbox formControlName="isVariableBudget">Presupuesto Variable</mat-checkbox>
-    @if (isVariableBudget) {
-      <div class="field-row" style="margin-top: 12px">
-        <div class="field">
-          <label>Presupuesto Mensual (Gs.)
-            <input formControlName="monthlyBudget" appThousands />
-          </label>
-        </div>
-        <div class="field">
-          <label>Categoría Vinculada
-            <app-select formControlName="linkedCategoryId" nullLabel="Sin categoría" [items]="categories"></app-select>
-          </label>
-        </div>
-      </div>
-    }
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">

@@ -13,12 +13,14 @@
   </div>
   <div class="flex-1"></div>
   <button mat-flat-button class="btn-primary" (click)="openCreate()">
-    <mat-icon>add</mat-icon> Nuevo
+    <mat-icon>add</mat-icon>Nuevo
   </button>
 </div>
 
 @if (loading()) {
-  <div class="loading-center"><mat-spinner /></div>
+  <div class="table-card">
+    <div class="loading-center"><mat-spinner /></div>
+  </div>
 } @else {
 
   @if (prestamos.length) {
@@ -77,9 +79,9 @@
                           <button class="status-btn" [class.is-paid]="inst.isPaid"
                                   (click)="toggleInstallment(loan, inst)">
                             @if (inst.isPaid) {
-                              <mat-icon class="status-icon">check_circle</mat-icon> PAGADO
+                              <mat-icon class="status-icon">check_circle</mat-icon>PAGADO
                             } @else {
-                              <mat-icon class="status-icon">radio_button_unchecked</mat-icon> PAGAR
+                              <mat-icon class="status-icon">radio_button_unchecked</mat-icon>PAGAR
                             }
                           </button>
                         </td>
@@ -152,9 +154,9 @@
                           <button class="status-btn" [class.is-paid]="inst.isPaid"
                                   (click)="toggleInstallment(loan, inst)">
                             @if (inst.isPaid) {
-                              <mat-icon class="status-icon">check_circle</mat-icon> PAGADO
+                              <mat-icon class="status-icon">check_circle</mat-icon>PAGADO
                             } @else {
-                              <mat-icon class="status-icon">radio_button_unchecked</mat-icon> PAGAR
+                              <mat-icon class="status-icon">radio_button_unchecked</mat-icon>PAGAR
                             }
                           </button>
                         </td>
@@ -172,9 +174,11 @@
   }
 
   @if (!prestamos.length && !ahorros.length) {
-    <div class="flex flex-col items-center py-16 gap-3 text-slate-400">
-      <mat-icon style="font-size:48px;width:48px;height:48px">account_balance</mat-icon>
-      <span>No hay préstamos registrados</span>
+    <div class="table-card">
+      <div class="empty-state">
+        <mat-icon>account_balance</mat-icon>
+        <span>No hay préstamos registrados</span>
+      </div>
     </div>
   }
 }

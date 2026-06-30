@@ -10,6 +10,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { UserFormDialogComponent } from './user-form-dialog.component';
 import { AuthService } from '../../core/services/auth.service';
@@ -29,7 +30,8 @@ import { UserDto } from '../../core/models';
     MatIconModule,
     MatDialogModule,
     MatProgressSpinnerModule,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './users.component.html'
 })

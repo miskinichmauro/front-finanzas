@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
 import { SummaryService } from '../../core/services/summary.service';
 import { MonthlySummaryDto } from '../../core/models';
+import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
 interface StatCard { label: string; value: string; icon: string; gradient: string; }
 
@@ -57,6 +58,8 @@ export class DashboardComponent implements OnInit {
   }
 
   private fmt(value: number): string {
-    return 'Gs. ' + value.toLocaleString('es-PY');
+    return 'Gs. ' + formatDisplayedAmount(value);
   }
 }
+
+

@@ -44,8 +44,8 @@ export class MainLayoutComponent {
       items: [
         { label: 'Ingresos',     icon: 'trending_up', route: '/ingresos' },
         { label: 'Gastos Fijos', icon: 'repeat',      route: '/gastos-fijos' },
-        { label: 'Transacciones',      icon: 'swap_horiz',     route: '/transacciones' },
-        { label: 'Pagos Pendientes',   icon: 'pending_actions', route: '/pagos-pendientes' },
+        { label: 'Gastos del Periodo',      icon: 'swap_horiz',     route: '/gastos' },
+        { label: 'Pagos y Cobros Pendientes',   icon: 'pending_actions', route: '/pagos-pendientes' },
         { label: 'Préstamos',          icon: 'account_balance', route: '/prestamos' }
       ]
     },

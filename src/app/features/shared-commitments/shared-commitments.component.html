@@ -1,10 +1,10 @@
-<app-page-header title="Compromisos Compartidos" subtitle="Gastos y compromisos del grupo de reparto" />
+<app-page-header title="Compromisos Compartidos" subtitle="Compromisos fijos y compromisos por categoría del grupo de reparto" />
 
 <div class="page-toolbar">
   <div class="toolbar-field">
     <label>Grupo de Reparto
-      <app-select [(ngModel)]="selectedGroupId" (ngModelChange)="loadData()" style="width: 220px"
-        nullLabel="Todos los grupos" [items]="sharingGroups">
+      <app-select [(ngModel)]="selectedGroupId" (ngModelChange)="onGroupChange()" style="width: 220px"
+        nullLabel="Seleccionar..." [items]="sharingGroups">
       </app-select>
     </label>
   </div>
@@ -15,11 +15,22 @@
     </label>
   </div>
   <div style="margin-left:auto; display:flex; gap:8px">
-    <button mat-stroked-button (click)="openXmlImport()">
-      <mat-icon>file_upload</mat-icon> Importar XML
+    <button mat-stroked-button class="btn-import-xml" (click)="openXmlImport()" [disabled]="importingXml()">
+      @if (importingXml()) {
+        <span class="btn-import-xml__loading">
+          <mat-spinner diameter="16" />
+        </span>
+        <span class="btn-import-xml__content btn-import-xml__content--hidden">
+          <mat-icon>file_upload</mat-icon><span>Importar XML</span>
+        </span>
+      } @else {
+        <span class="btn-import-xml__content">
+          <mat-icon>file_upload</mat-icon><span>Importar XML</span>
+        </span>
+      }
     </button>
     <button mat-flat-button class="btn-primary" (click)="openCreate()">
-      <mat-icon>add</mat-icon> Nuevo Compromiso
+      <mat-icon>add</mat-icon>Nuevo Compromiso
     </button>
   </div>
 </div>
@@ -27,6 +38,11 @@
 <div class="table-card">
   <div class="table-scroll">
   <table mat-table [dataSource]="dataSource" matSort>
+    <ng-container matColumnDef="type">
+      <th mat-header-cell *matHeaderCellDef>Tipo</th>
+      <td mat-cell *matCellDef="let row">{{ getCommitmentTypeLabel(row) }}</td>
+    </ng-container>
+
     <ng-container matColumnDef="description">
       <th mat-header-cell *matHeaderCellDef mat-sort-header>Descripción</th>
       <td mat-cell *matCellDef="let row">{{ row.description }}</td>
@@ -34,7 +50,7 @@
 
     <ng-container matColumnDef="categoryName">
       <th mat-header-cell *matHeaderCellDef>Categoría</th>
-      <td mat-cell *matCellDef="let row"><span class="status-badge badge-section">{{ row.categoryName ?? '—' }}</span></td>
+      <td mat-cell *matCellDef="let row">{{ row.categoryName ?? '—' }}</td>
     </ng-container>
 
     <ng-container matColumnDef="groupName">
@@ -42,23 +58,47 @@
       <td mat-cell *matCellDef="let row">{{ getGroupName(row.sharingGroupId) }}</td>
     </ng-container>
 
-    <ng-container matColumnDef="amount">
-      <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto</th>
-      <td mat-cell *matCellDef="let row" class="text-right">Gs. {{ formatAmount(row.netAmount) }}</td>
+    <ng-container matColumnDef="budgetAmount">
+      <th mat-header-cell *matHeaderCellDef>Presupuesto</th>
+      <td mat-cell *matCellDef="let row" class="text-right" style="white-space: nowrap;">
+        @if (getBudgetAmount(row) !== null) {
+          <span>Gs. {{ formatAmount(getBudgetAmount(row)!) }}</span>
+        } @else {
+          <span>—</span>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="discountAmount">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Descuento</th>
+      <td mat-cell *matCellDef="let row" class="text-right" style="white-space: nowrap;">Gs. {{ formatAmount(row.discountAmount) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="grossAmount">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto Bruto</th>
+      <td mat-cell *matCellDef="let row" class="text-right" style="white-space: nowrap;">Gs. {{ formatAmount(row.grossAmount) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="netAmount">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header>Monto Neto</th>
+      <td mat-cell *matCellDef="let row" class="text-right" style="white-space: nowrap;">Gs. {{ formatAmount(row.netAmount) }}</td>
     </ng-container>
 
     <ng-container matColumnDef="isActive">
       <th mat-header-cell *matHeaderCellDef>Estado</th>
       <td mat-cell *matCellDef="let row">
-        <span [class]="'status-badge ' + (row.isActive ? 'badge-active' : 'badge-inactive')">{{ row.isActive ? 'Activo' : 'Inactivo' }}</span>
+        <span class="badge" [ngClass]="row.isActive ? 'badge--green' : 'badge--red'">{{ row.isActive ? 'Activo' : 'Inactivo' }}</span>
       </td>
     </ng-container>
 
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef>Acciones</th>
       <td mat-cell *matCellDef="let row">
-        <button mat-icon-button color="primary" (click)="openEdit(row)"><mat-icon>edit</mat-icon></button>
-        <button mat-icon-button color="warn" (click)="openDelete(row)"><mat-icon>delete</mat-icon></button>
+        <app-row-actions
+          editTooltip="Editar compromiso"
+          deleteTooltip="Eliminar compromiso"
+          (editAction)="openEdit(row)"
+          (deleteAction)="openDelete(row)" />
       </td>
     </ng-container>
 
@@ -68,6 +108,11 @@
       <td [attr.colspan]="displayedColumns.length" class="empty-row-cell">
         @if (loading()) {
           <div class="loading-center"><mat-spinner /></div>
+        } @else if (!selectedGroupId) {
+          <div class="empty-state">
+            <mat-icon>group</mat-icon>
+            <span>Selecciona un grupo para ver los compromisos compartidos</span>
+          </div>
         } @else {
           <div class="empty-state">
             <mat-icon>group_off</mat-icon>
@@ -88,3 +133,4 @@
     <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons />
   </div>
 </div>
+

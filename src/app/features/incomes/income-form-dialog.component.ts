@@ -39,8 +39,8 @@ export class IncomeFormDialogComponent implements OnInit {
 
   readonly isAdmin = this.authService.isAdmin;
 
-  users: UserDto[] = [];
-  categories: CategoryDto[] = [];
+  users: UserDto[] = null as any;
+  categories: CategoryDto[] = null as any;
   updateSeries = false;
 
   form = this.fb.group({

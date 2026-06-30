@@ -12,12 +12,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { IncomeFormDialogComponent } from './income-form-dialog.component';
 import { IncomesService } from '../../core/services/incomes.service';
 import { UsersService } from '../../core/services/users.service';
 import { CategoriesService } from '../../core/services/categories.service';
 import { IncomeDto, UserDto, CategoryDto } from '../../core/models';
+import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
 @Component({
   selector: 'app-incomes',
@@ -33,7 +35,8 @@ import { IncomeDto, UserDto, CategoryDto } from '../../core/models';
     MatProgressSpinnerModule,
     MatChipsModule,
     AppSelectComponent,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './incomes.component.html'
 })
@@ -105,7 +108,7 @@ export class IncomesComponent implements OnInit {
   }
 
   formatAmount(amount: number): string {
-    return amount.toLocaleString('es-PY');
+    return formatDisplayedAmount(amount);
   }
 
   openCreate(): void {
@@ -135,3 +138,5 @@ export class IncomesComponent implements OnInit {
     });
   }
 }
+
+

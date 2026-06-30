@@ -42,9 +42,9 @@ export class PeriodExpenseFormDialogComponent implements OnInit {
 
   readonly isAdmin = this.authService.isAdmin;
 
-  users: UserDto[] = [];
-  categories: CategoryDto[] = [];
-  paymentMethods: PaymentMethodDto[] = [];
+  users: UserDto[] = null as any;
+  categories: CategoryDto[] = null as any;
+  paymentMethods: (PaymentMethodDto & { displayName: string })[] = null as any;
   months = [
     { value: 1, label: 'Enero' }, { value: 2, label: 'Febrero' }, { value: 3, label: 'Marzo' },
     { value: 4, label: 'Abril' }, { value: 5, label: 'Mayo' }, { value: 6, label: 'Junio' },
@@ -77,7 +77,12 @@ export class PeriodExpenseFormDialogComponent implements OnInit {
       this.form.get('userId')?.disable();
     }
     this.categoriesService.getAll().subscribe(c => this.categories = c);
-    this.paymentMethodsService.getAll().subscribe(p => this.paymentMethods = p);
+    this.paymentMethodsService.getAll().subscribe(p => {
+      this.paymentMethods = p.map(m => ({
+        ...m,
+        displayName: [m.name, m.lastDigits || null, m.bankName || null].filter(Boolean).join(' - ')
+      }));
+    });
 
     if (this.data) {
       this.form.patchValue({

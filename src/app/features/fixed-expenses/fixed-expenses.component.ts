@@ -10,12 +10,14 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { FixedExpenseFormDialogComponent } from './fixed-expense-form-dialog.component';
 import { FixedExpensesService } from '../../core/services/fixed-expenses.service';
 import { UsersService } from '../../core/services/users.service';
 import { CategoriesService } from '../../core/services/categories.service';
 import { FixedExpenseDto, UserDto, CategoryDto } from '../../core/models';
+import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
 @Component({
   selector: 'app-fixed-expenses',
@@ -29,7 +31,8 @@ import { FixedExpenseDto, UserDto, CategoryDto } from '../../core/models';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './fixed-expenses.component.html'
 })
@@ -92,7 +95,7 @@ export class FixedExpensesComponent implements OnInit {
   }
 
   formatAmount(amount: number): string {
-    return amount.toLocaleString('es-PY');
+    return formatDisplayedAmount(amount);
   }
 
   openCreate(): void {
@@ -122,3 +125,5 @@ export class FixedExpensesComponent implements OnInit {
     });
   }
 }
+
+

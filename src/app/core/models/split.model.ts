@@ -23,6 +23,7 @@ export interface SplitItemDto {
   isVariableBudget: boolean;
   monthlyBudget: number | null;
   actualAmount: number | null;
+  previousMonthSurplus: number;
   shares: SplitShareDto[];
 }
 

@@ -11,6 +11,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { PeriodExpenseFormDialogComponent } from './period-expense-form-dialog.component';
 import { PeriodExpensesService } from '../../core/services/period-expenses.service';
@@ -18,6 +19,7 @@ import { UsersService } from '../../core/services/users.service';
 import { CategoriesService } from '../../core/services/categories.service';
 import { PeriodExpenseDto } from '../../core/models/period-expense.model';
 import { UserDto, CategoryDto } from '../../core/models';
+import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
 @Component({
   selector: 'app-period-expenses',
@@ -32,7 +34,8 @@ import { UserDto, CategoryDto } from '../../core/models';
     MatIconModule,
     MatProgressSpinnerModule,
     AppSelectComponent,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './period-expenses.component.html'
 })
@@ -99,7 +102,7 @@ export class PeriodExpensesComponent implements OnInit {
   }
 
   formatAmount(amount: number): string {
-    return amount.toLocaleString('es-PY');
+    return formatDisplayedAmount(amount);
   }
 
   openCreate(): void {
@@ -129,3 +132,5 @@ export class PeriodExpensesComponent implements OnInit {
     });
   }
 }
+
+

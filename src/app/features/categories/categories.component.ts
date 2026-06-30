@@ -10,6 +10,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { CategoryFormDialogComponent } from './category-form-dialog.component';
 import { CategoriesService } from '../../core/services/categories.service';
@@ -27,7 +28,8 @@ import { CategoryDto } from '../../core/models';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './categories.component.html'
 })

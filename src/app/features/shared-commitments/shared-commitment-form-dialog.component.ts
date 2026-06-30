@@ -39,10 +39,15 @@ export class SharedCommitmentFormDialogComponent implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
   data = inject<SharedCommitmentDto | null>(MAT_DIALOG_DATA);
 
-  sharingGroups: SharingGroupDto[] = [];
-  categories: CategoryDto[] = [];
-  paymentMethods: (PaymentMethodDto & { displayName: string })[] = [];
-  commerces: (CommerceDto & { displayName: string })[] = [];
+  sharingGroups: SharingGroupDto[] = null as any;
+  categories: CategoryDto[] = null as any;
+  paymentMethods: (PaymentMethodDto & { displayName: string })[] = null as any;
+  commerces: (CommerceDto & { displayName: string })[] = null as any;
+
+  commitmentTypeOptions = [
+    { id: false, name: 'Gasto' },
+    { id: true, name: 'Destinado a Categoría' }
+  ];
 
   form = this.fb.group({
     sharingGroupId: ['', [Validators.required]],
@@ -70,9 +75,19 @@ export class SharedCommitmentFormDialogComponent implements OnInit {
 
   get isEdit(): boolean { return !!this.data; }
 
+  get commitmentTypeHint(): string {
+    return this.isVariableBudget
+      ? 'El monto se calcula según el gasto real del mes en una categoría y el presupuesto configurado.'
+      : 'Cargás un monto manual que se reparte entre los miembros del grupo.';
+  }
+
+  get categoryLabel(): string {
+    return this.isVariableBudget ? 'Categoría del compromiso' : 'Categoría';
+  }
+
   get groupMembers(): { id: string; name: string }[] {
     const groupId = this.form.get('sharingGroupId')?.value;
-    const group = this.sharingGroups.find(g => g.id === groupId);
+    const group = (this.sharingGroups ?? []).find(g => g.id === groupId);
     return group?.members.map(m => ({ id: m.userId, name: m.userName })) ?? [];
   }
 
@@ -113,10 +128,87 @@ export class SharedCommitmentFormDialogComponent implements OnInit {
         linkedCategoryId: this.data.linkedCategoryId
       });
     }
+
+    this.form.get('isVariableBudget')?.valueChanges.subscribe(() => {
+      this.updateCommitmentTypeState();
+      this.recalculateForCurrentType();
+    });
+
+    this.form.get('monthlyBudget')?.valueChanges.subscribe(() => {
+      if (this.isVariableBudget) {
+        this.syncVariableBudgetAmounts();
+      }
+    });
+
+    this.updateCommitmentTypeState();
+    this.recalculateForCurrentType();
   }
 
-  onGrossAmountChange(): void { this.recalcFromPercent(); }
-  onDiscountPercentChange(): void { this.recalcFromPercent(); }
+  onGrossAmountChange(): void {
+    if (!this.isVariableBudget) {
+      this.recalcFromPercent();
+    }
+  }
+
+  onDiscountPercentChange(): void {
+    if (!this.isVariableBudget) {
+      this.recalcFromPercent();
+    }
+  }
+
+  onDiscountAmountChange(): void {
+    if (this.isVariableBudget) return;
+    const gross = this.form.get('grossAmount')?.value ?? 0;
+    const discount = this.form.get('discountAmount')?.value ?? 0;
+    const pct = gross > 0 ? Math.round(discount / gross * 100) : 0;
+    this.form.patchValue({ discountPercent: pct, netAmount: gross - discount }, { emitEvent: false });
+  }
+
+  private updateCommitmentTypeState(): void {
+    const grossAmount = this.form.get('grossAmount')!;
+    const monthlyBudget = this.form.get('monthlyBudget')!;
+    const linkedCategoryId = this.form.get('linkedCategoryId')!;
+
+    if (this.isVariableBudget) {
+      if (!(monthlyBudget.value ?? 0) && (grossAmount.value ?? 0) > 0) {
+        monthlyBudget.patchValue(grossAmount.value, { emitEvent: false });
+      }
+      grossAmount.clearValidators();
+      grossAmount.addValidators([Validators.min(0)]);
+      monthlyBudget.setValidators([Validators.required, Validators.min(0)]);
+      linkedCategoryId.setValidators([Validators.required]);
+    } else {
+      if (!(grossAmount.value ?? 0) && (monthlyBudget.value ?? 0) > 0) {
+        grossAmount.patchValue(monthlyBudget.value, { emitEvent: false });
+      }
+      grossAmount.setValidators([Validators.required, Validators.min(0)]);
+      monthlyBudget.clearValidators();
+      linkedCategoryId.clearValidators();
+    }
+
+    grossAmount.updateValueAndValidity({ emitEvent: false });
+    monthlyBudget.updateValueAndValidity({ emitEvent: false });
+    linkedCategoryId.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private recalculateForCurrentType(): void {
+    if (this.isVariableBudget) {
+      this.syncVariableBudgetAmounts();
+      return;
+    }
+
+    this.recalcFromPercent();
+  }
+
+  private syncVariableBudgetAmounts(): void {
+    const budget = this.form.get('monthlyBudget')?.value ?? 0;
+    this.form.patchValue({
+      grossAmount: budget,
+      discountPercent: 0,
+      discountAmount: 0,
+      netAmount: budget
+    }, { emitEvent: false });
+  }
 
   private recalcFromPercent(): void {
     const gross = this.form.get('grossAmount')?.value ?? 0;
@@ -125,19 +217,16 @@ export class SharedCommitmentFormDialogComponent implements OnInit {
     this.form.patchValue({ discountAmount: discountAmt, netAmount: gross - discountAmt }, { emitEvent: false });
   }
 
-  onDiscountAmountChange(): void {
-    const gross = this.form.get('grossAmount')?.value ?? 0;
-    const discount = this.form.get('discountAmount')?.value ?? 0;
-    const pct = gross > 0 ? Math.round(discount / gross * 100) : 0;
-    this.form.patchValue({ discountPercent: pct, netAmount: gross - discount }, { emitEvent: false });
-  }
-
   saving = false;
 
   onSubmit(): void {
     if (this.form.invalid || this.saving) return;
     this.saving = true;
     const value = this.form.getRawValue();
+    const isVariableBudget = value.isVariableBudget ?? false;
+    const effectiveGrossAmount = isVariableBudget ? (value.monthlyBudget ?? 0) : (value.grossAmount ?? 0);
+    const effectiveDiscountPercent = isVariableBudget ? 0 : (value.discountPercent ?? 0);
+
     const dto = {
       sharingGroupId: value.sharingGroupId!,
       date: value.date!,
@@ -145,15 +234,15 @@ export class SharedCommitmentFormDialogComponent implements OnInit {
       commerceId: value.commerceId || undefined,
       categoryId: value.categoryId!,
       paymentMethodId: value.paymentMethodId || undefined,
-      grossAmount: value.grossAmount ?? 0,
-      discountPercent: value.discountPercent ?? 0,
+      grossAmount: effectiveGrossAmount,
+      discountPercent: effectiveDiscountPercent,
       paidByUserId: value.paidByUserId || undefined,
       displayOrder: value.displayOrder ?? 0,
       notes: value.notes ?? '',
       isActive: value.isActive ?? true,
-      isVariableBudget: value.isVariableBudget ?? false,
-      monthlyBudget: value.isVariableBudget ? (value.monthlyBudget ?? undefined) : undefined,
-      linkedCategoryId: value.isVariableBudget ? (value.linkedCategoryId || undefined) : undefined
+      isVariableBudget,
+      monthlyBudget: isVariableBudget ? (value.monthlyBudget ?? undefined) : undefined,
+      linkedCategoryId: isVariableBudget ? (value.linkedCategoryId || undefined) : undefined
     };
 
     if (this.isEdit) {

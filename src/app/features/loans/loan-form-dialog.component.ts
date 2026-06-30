@@ -41,7 +41,7 @@ export class LoanFormDialogComponent implements OnInit {
     { value: 'Ahorro', label: 'Ahorro' }
   ];
 
-  users: UserDto[] = [];
+  users: UserDto[] = null as any;
 
   form = this.fb.group({
     userId: ['', Validators.required],

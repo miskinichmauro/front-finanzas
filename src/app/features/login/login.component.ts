@@ -29,9 +29,23 @@ export class LoginComponent {
   loading     = signal(false);
   error       = signal('');
   showPass    = signal(false);
+  submitted   = signal(false);
+
+  isEmailInvalid(): boolean {
+    return this.submitted() && !this.email.trim();
+  }
+
+  isPasswordInvalid(): boolean {
+    return this.submitted() && !this.password.trim();
+  }
 
   submit(): void {
-    if (!this.email || !this.password) return;
+    this.submitted.set(true);
+
+    if (!this.email.trim() || !this.password.trim()) {
+      this.error.set('');
+      return;
+    }
 
     this.loading.set(true);
     this.error.set('');
@@ -39,9 +53,11 @@ export class LoginComponent {
     this.auth.login(this.email, this.password).subscribe({
       next:  () => this.router.navigate(['/dashboard']),
       error: () => {
-        this.error.set('Email o contraseña incorrectos.');
+        this.error.set('No pudimos iniciar sesión. Por favor, intentalo de nuevo más tarde o verificalo con Soporte.');
         this.loading.set(false);
       }
     });
   }
 }
+
+

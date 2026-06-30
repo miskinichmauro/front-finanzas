@@ -11,15 +11,18 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TransactionFormDialogComponent } from './transaction-form-dialog.component';
 import { XmlImportDialogComponent } from '../xml-import/xml-import-dialog.component';
 import { TransactionsService } from '../../core/services/transactions.service';
+import { XmlParseService } from '../../core/services/xml-parse.service';
 import { UsersService } from '../../core/services/users.service';
 import { CategoriesService } from '../../core/services/categories.service';
 import { CommercesService } from '../../core/services/commerces.service';
 import { PaymentMethodsService } from '../../core/services/payment-methods.service';
 import { TransactionDto, UserDto, CategoryDto, CommerceDto, PaymentMethodDto } from '../../core/models';
+import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
 @Component({
   selector: 'app-transactions',
@@ -34,12 +37,14 @@ import { TransactionDto, UserDto, CategoryDto, CommerceDto, PaymentMethodDto } f
     MatIconModule,
     MatProgressSpinnerModule,
     AppSelectComponent,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './transactions.component.html'
 })
 export class TransactionsComponent implements OnInit {
   private transactionsService = inject(TransactionsService);
+  private xmlParseService = inject(XmlParseService);
   private usersService = inject(UsersService);
   private categoriesService = inject(CategoriesService);
   private commercesService = inject(CommercesService);
@@ -50,8 +55,9 @@ export class TransactionsComponent implements OnInit {
   @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
   @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
-  displayedColumns = ['date', 'commerceName', 'categoryName', 'userName', 'grossAmount', 'netAmount', 'actions'];
+  displayedColumns = ['date', 'commerceName', 'categoryName', 'userName', 'grossAmount', 'discountPercent', 'netAmount', 'actions'];
   loading = signal(false);
+  importingXml = signal(false);
   dataSource = new MatTableDataSource<TransactionDto>([]);
   searchText = '';
 
@@ -79,6 +85,7 @@ export class TransactionsComponent implements OnInit {
         this.getCategoryName(row.categoryId),
         this.getUserName(row.userId),
         String(row.grossAmount),
+        String(row.discountPercent),
         String(row.netAmount),
         row.notes ?? ''
       ].join(' ').toLowerCase();
@@ -100,7 +107,7 @@ export class TransactionsComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.snackBar.open('Error al cargar transacciones', 'Cerrar', { duration: 3000 });
+        this.snackBar.open('Error al cargar los gastos', 'Cerrar', { duration: 3000 });
         this.loading.set(false);
       }
     });
@@ -134,17 +141,35 @@ export class TransactionsComponent implements OnInit {
   }
 
   formatAmount(amount: number): string {
-    return amount.toLocaleString('es-PY');
+    return formatDisplayedAmount(amount);
   }
 
   openXmlImport(): void {
-    const ref = this.dialog.open(XmlImportDialogComponent, {
-      data: { mode: 'transaction' },
-      width: '95vw',
-      maxWidth: '1100px',
-      maxHeight: '95vh'
-    });
-    ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xml';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      this.importingXml.set(true);
+      this.xmlParseService.parseXml(file).subscribe({
+        next: invoice => {
+          this.importingXml.set(false);
+          const ref = this.dialog.open(XmlImportDialogComponent, {
+            data: { mode: 'transaction', initialFile: file, initialInvoice: invoice },
+            width: '95vw',
+            maxWidth: '1100px',
+            maxHeight: '95vh'
+          });
+          ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
+        },
+        error: () => {
+          this.importingXml.set(false);
+          this.snackBar.open('Error al procesar el XML', 'Cerrar', { duration: 3000 });
+        }
+      });
+    };
+    input.click();
   }
 
   openCreate(): void {
@@ -174,3 +199,5 @@ export class TransactionsComponent implements OnInit {
     });
   }
 }
+
+

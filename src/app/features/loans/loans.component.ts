@@ -15,6 +15,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { LoanFormDialogComponent } from './loan-form-dialog.component';
 import { LoansService } from '../../core/services/loans.service';
 import { LoanDto, LoanInstallmentDto } from '../../core/models';
+import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
 @Component({
   selector: 'app-loans',
@@ -132,7 +133,7 @@ export class LoansComponent implements OnInit {
   }
 
   fmt(amount: number): string {
-    return new Intl.NumberFormat('es-PY').format(amount);
+    return formatDisplayedAmount(amount);
   }
 
   fmtDate(date: string): string {
@@ -149,3 +150,5 @@ export class LoansComponent implements OnInit {
     return this.loadingInstallments.has(loanId) && !this.installmentsMap()[loanId];
   }
 }
+
+

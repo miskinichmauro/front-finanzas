@@ -1,6 +1,7 @@
 import { Component, AfterViewInit, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,6 +13,7 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
+import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { PeriodExpensesService } from '../../core/services/period-expenses.service';
 import { DebtsService } from '../../core/services/debts.service';
 import { FriendsService } from '../../core/services/friends.service';
@@ -21,8 +23,7 @@ import { PeriodExpenseDto, RegisterPeriodExpensePaymentDto } from '../../core/mo
 import { DebtDto, CreateDebtDto, SubmitPaymentDto } from '../../core/models/debt.model';
 import { FriendDto } from '../../core/models/friend.model';
 import { CategoriesService } from '../../core/services/categories.service';
-
-type ViewMode = 'owed-by-me' | 'owed-to-me';
+import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
 @Component({
   selector: 'app-register-pending-payment-dialog',
@@ -31,7 +32,7 @@ type ViewMode = 'owed-by-me' | 'owed-to-me';
   template: `
     <h2 mat-dialog-title>Registrar pago</h2>
     <mat-dialog-content>
-      <p class="dialog-subtitle">{{ data.description }} · Gs. {{ data.amount.toLocaleString('es-PY') }}</p>
+      <p class="dialog-subtitle">{{ data.description }} · Gs. {{ formatAmount(data.amount) }}</p>
       <form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()">
         <div class="field">
           <label>Nro. de comprobante
@@ -57,6 +58,7 @@ type ViewMode = 'owed-by-me' | 'owed-to-me';
   `
 })
 export class RegisterPendingPaymentDialogComponent {
+  formatAmount(amount: number): string { return formatDisplayedAmount(amount); }
   private readonly fb = inject(FormBuilder);
   readonly dialogRef = inject(MatDialogRef<RegisterPendingPaymentDialogComponent>);
   readonly data = inject<{ description: string; amount: number }>(MAT_DIALOG_DATA);
@@ -85,7 +87,7 @@ export class RegisterPendingPaymentDialogComponent {
   template: `
     <h2 mat-dialog-title>Rechazar pago</h2>
     <mat-dialog-content>
-      <p class="dialog-subtitle">{{ data.description }} · Gs. {{ data.amount.toLocaleString('es-PY') }}</p>
+      <p class="dialog-subtitle">{{ data.description }} · Gs. {{ formatAmount(data.amount) }}</p>
       <form class="dialog-form" [formGroup]="form">
         <div class="field">
           <label>Motivo del rechazo (opcional)
@@ -101,6 +103,7 @@ export class RegisterPendingPaymentDialogComponent {
   `
 })
 export class RejectDebtDialogComponent {
+  formatAmount(amount: number): string { return formatDisplayedAmount(amount); }
   private readonly fb = inject(FormBuilder);
   readonly dialogRef = inject(MatDialogRef<RejectDebtDialogComponent>);
   readonly data = inject<{ description: string; amount: number }>(MAT_DIALOG_DATA);
@@ -118,6 +121,51 @@ export class RejectDebtDialogComponent {
   selector: 'app-create-debt-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule, MatProgressSpinnerModule, AppSelectComponent],
+  styles: [`
+    .dialog-form {
+      gap: 8px;
+    }
+
+    .field > label {
+      gap: 2px;
+      font-size: 10px;
+    }
+
+    .field > label > input {
+      min-height: 28px;
+      height: 28px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      line-height: 1.1;
+      box-sizing: border-box;
+    }
+
+    .field > label > input[type='date'] {
+      padding-right: 34px;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .field > label > app-select {
+      display: block;
+      width: 100%;
+    }
+
+    mat-dialog-actions {
+      min-height: 40px !important;
+      padding-top: 4px !important;
+    }
+
+    mat-dialog-actions button[mat-button],
+    mat-dialog-actions button[mat-flat-button] {
+      min-height: 28px !important;
+      height: 28px !important;
+      padding: 0 10px !important;
+      font-size: 11.5px !important;
+      line-height: 1 !important;
+    }
+  `],
   template: `
     <h2 mat-dialog-title>Nueva Deuda</h2>
     <mat-dialog-content>
@@ -215,7 +263,8 @@ export class CreateDebtDialogComponent implements OnInit {
     MatTableModule,
     MatTooltipModule,
     AppSelectComponent,
-    PageHeaderComponent
+    PageHeaderComponent,
+    RowActionsComponent
   ],
   templateUrl: './pending-payments.component.html',
   styleUrl: './pending-payments.component.scss'
@@ -228,21 +277,30 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
   private readonly dialog                = inject(MatDialog);
   private readonly snackBar              = inject(MatSnackBar);
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild('periodPaginator') paginator!: MatPaginator;
+  @ViewChild('debtPaginator')   debtPaginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns    = ['description', 'categoryName', 'amount', 'period', 'actions'];
-  debtColumnsDebtor   = ['debtDescription', 'debtCreditor', 'debtAmount', 'debtDate', 'debtStatus', 'debtActionsDebtor'];
-  debtColumnsCreditor = ['debtDescription', 'debtDebtor', 'debtAmount', 'debtDate', 'debtStatus', 'debtActionsCreditor'];
+  displayedColumns = ['description', 'categoryName', 'amount', 'period', 'actions'];
+  debtColumns      = ['debtCounterpart', 'debtDescription', 'debtAmount', 'debtDate', 'debtStatus', 'debtActions'];
 
   loading      = signal(false);
   loadingDebts = signal(false);
 
-  viewMode: ViewMode = 'owed-by-me';
-  allPeriods   = false;
-  statusFilter = '';
-  filterYear   = new Date().getFullYear();
-  filterMonth  = new Date().getMonth() + 1;
+  pageMode  = 'period';
+  pageModes = [
+    { value: 'period', label: 'Gastos del período' },
+    { value: 'debts',  label: 'Deudas con amigos' }
+  ];
+
+  allPeriods        = false;
+  statusFilter      = '';
+  counterpartFilter = '';
+  filterYear        = new Date().getFullYear();
+  filterMonth       = new Date().getMonth() + 1;
+
+  counterpartOptions: { value: string; label: string }[] = [{ value: '', label: 'Todos' }];
+  private allDebtsRaw: DebtDto[] = [];
 
   dataSource     = new MatTableDataSource<PeriodExpenseDto>([]);
   debtDataSource = new MatTableDataSource<DebtDto>([]);
@@ -256,11 +314,6 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
     { value: 10, label: 'Octubre' }, { value: 11, label: 'Noviembre' }, { value: 12, label: 'Diciembre' }
   ];
 
-  viewModes = [
-    { value: 'owed-by-me',  label: 'Lo que debo' },
-    { value: 'owed-to-me', label: 'Lo que me deben' }
-  ];
-
   statusOptions = [
     { value: '',                     label: 'Todos' },
     { value: 'Pending',              label: 'Pendiente' },
@@ -270,9 +323,12 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
     { value: 'Rejected',             label: 'Rechazado' }
   ];
 
-  get periodTotal(): number  { return this.dataSource.data.reduce((s, r) => s + r.amount, 0); }
-  get debtTotal(): number    { return this.debtDataSource.data.reduce((s, r) => s + r.amount, 0); }
+  get periodTotal(): number   { return this.dataSource.data.reduce((s, r) => s + r.amount, 0); }
+  get debtTotal(): number     { return this.debtDataSource.data.reduce((s, r) => s + r.amount, 0); }
   get currentUserId(): string { return this.auth.currentUser()?.userId ?? ''; }
+
+  isDebtor(debt: DebtDto): boolean    { return debt.debtorUserId === this.currentUserId; }
+  counterpart(debt: DebtDto): string  { return this.isDebtor(debt) ? debt.creditorUserName : debt.debtorUserName; }
 
   ngOnInit(): void {
     this.categoriesService.getAll().subscribe(c => this.categories = c);
@@ -284,21 +340,29 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
     this.dataSource.sort      = this.sort;
   }
 
-  onViewModeChange(): void { this.loadData(); }
-  onFilterChange(): void   { this.loadData(); }
+  onFilterChange(): void { this.loadData(); }
+
+  onPageModeChange(): void {
+    this.loadData();
+    setTimeout(() => {
+      this.debtDataSource.paginator = this.debtPaginator ?? null;
+    });
+  }
 
   loadData(): void {
-    this.loadDebts();
-    if (this.viewMode === 'owed-by-me') this.loadPeriodExpenses();
-    else this.dataSource.data = [];
+    if (this.pageMode === 'period') {
+      this.loadPeriodExpenses();
+    } else {
+      this.loadDebts();
+    }
   }
 
   private loadPeriodExpenses(): void {
     this.loading.set(true);
     this.dataSource.data = [];
     this.periodExpensesService.getPending(this.filterYear, this.filterMonth).subscribe({
-      next: data  => { this.dataSource.data = data; this.loading.set(false); },
-      error: ()   => { this.snackBar.open('Error al cargar pagos pendientes', 'Cerrar', { duration: 3000 }); this.loading.set(false); }
+      next: data => { this.dataSource.data = data; this.loading.set(false); },
+      error: ()  => { this.snackBar.open('Error al cargar pagos y cobros pendientes', 'Cerrar', { duration: 3000 }); this.loading.set(false); }
     });
   }
 
@@ -311,14 +375,45 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
       month:      this.allPeriods ? undefined : this.filterMonth,
       allPeriods: this.allPeriods
     };
-    const obs = this.viewMode === 'owed-by-me'
-      ? this.debtsService.getOwedByMe(filter)
-      : this.debtsService.getOwedToMe(filter);
-
-    obs.subscribe({
-      next: data => { this.debtDataSource.data = data; this.loadingDebts.set(false); },
-      error: ()  => { this.snackBar.open('Error al cargar deudas', 'Cerrar', { duration: 3000 }); this.loadingDebts.set(false); }
+    forkJoin([
+      this.debtsService.getOwedByMe(filter),
+      this.debtsService.getOwedToMe(filter)
+    ]).subscribe({
+      next: ([byMe, toMe]) => {
+        this.allDebtsRaw = [...byMe, ...toMe].sort((a, b) => b.date.localeCompare(a.date));
+        this.buildCounterpartOptions();
+        this.applyDebtFilters();
+        this.loadingDebts.set(false);
+      },
+      error: () => { this.snackBar.open('Error al cargar deudas', 'Cerrar', { duration: 3000 }); this.loadingDebts.set(false); }
     });
+  }
+
+  private buildCounterpartOptions(): void {
+    const seen = new Map<string, string>();
+    for (const debt of this.allDebtsRaw) {
+      const userId = this.isDebtor(debt) ? debt.creditorUserId : debt.debtorUserId;
+      const name   = this.counterpart(debt);
+      if (!seen.has(userId)) seen.set(userId, name);
+    }
+    this.counterpartOptions = [
+      { value: '', label: 'Todos' },
+      ...Array.from(seen.entries())
+        .map(([value, label]) => ({ value, label }))
+        .sort((a, b) => a.label.localeCompare(b.label))
+    ];
+    if (this.counterpartFilter && !seen.has(this.counterpartFilter)) {
+      this.counterpartFilter = '';
+    }
+  }
+
+  applyDebtFilters(): void {
+    this.debtDataSource.data = this.counterpartFilter
+      ? this.allDebtsRaw.filter(debt => {
+          const cpId = this.isDebtor(debt) ? debt.creditorUserId : debt.debtorUserId;
+          return cpId === this.counterpartFilter;
+        })
+      : this.allDebtsRaw;
   }
 
   getCategoryName(categoryId: string | null): string {
@@ -330,7 +425,7 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
     return `${month} ${row.year}`;
   }
 
-  formatAmount(amount: number): string { return Math.round(amount).toLocaleString('es-PY'); }
+  formatAmount(amount: number): string { return formatDisplayedAmount(amount); }
 
   formatDate(iso: string): string {
     try { return new Date(iso).toLocaleDateString('es-PY'); } catch { return iso; }
@@ -342,11 +437,11 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
 
   statusClass(status: string): string {
     const map: Record<string, string> = {
-      Pending:              'badge-pending',
-      Accepted:             'badge-accepted',
-      AwaitingConfirmation: 'badge-awaiting',
-      Paid:                 'badge-paid',
-      Rejected:             'badge-rejected'
+      Pending:              'badge--amber',
+      Accepted:             'badge--green',
+      AwaitingConfirmation: 'badge--blue',
+      Paid:                 'badge--green',
+      Rejected:             'badge--red'
     };
     return map[status] ?? '';
   }
@@ -433,3 +528,5 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
     });
   }
 }
+
+

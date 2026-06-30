@@ -27,7 +27,7 @@ export class CategoryFormDialogComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
   data = inject<CategoryDto | null>(MAT_DIALOG_DATA);
 
-  categories: CategoryDto[] = [];
+  categories: CategoryDto[] = null as any;
 
   form = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],

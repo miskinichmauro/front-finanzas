@@ -10,6 +10,8 @@ import { catchError } from 'rxjs/operators';
 import { SharingGroupsService } from '../../core/services/sharing-groups.service';
 import { FriendsService } from '../../core/services/friends.service';
 import { UsersService } from '../../core/services/users.service';
+import { UserRole } from '../../core/models';
+import { AuthService } from '../../core/services/auth.service';
 import { SharingGroupDto } from '../../core/models';
 import { AppMultiSelectComponent } from '../../shared/components/app-multi-select/app-multi-select.component';
 
@@ -37,11 +39,12 @@ export class SharingGroupFormDialogComponent implements OnInit {
   private readonly sharingGroupsService = inject(SharingGroupsService);
   private readonly friendsService = inject(FriendsService);
   private readonly usersService = inject(UsersService);
+  private readonly authService = inject(AuthService);
   private readonly dialogRef = inject(MatDialogRef<SharingGroupFormDialogComponent>);
   private readonly snackBar = inject(MatSnackBar);
   data = inject<SharingGroupDto | null>(MAT_DIALOG_DATA);
 
-  memberOptions: MemberOption[] = [];
+  memberOptions: MemberOption[] = null as any;
   selectedMemberIds: string[] = [];
 
   form = this.fb.group({
@@ -50,18 +53,42 @@ export class SharingGroupFormDialogComponent implements OnInit {
   });
 
   get isEdit(): boolean { return !!this.data; }
+  get currentUserId(): string | null { return this.authService.currentUser()?.userId ?? null; }
+  get memberIdsForSave(): string[] {
+    const ids = new Set(this.selectedMemberIds);
+    if (this.currentUserId) ids.add(this.currentUserId);
+    return Array.from(ids);
+  }
 
   ngOnInit(): void {
-    const existingIds = this.data?.members.map(m => m.userId) ?? [];
+    const currentUserId = this.currentUserId;
+    const existingIds = (this.data?.members.map(m => m.userId) ?? [])
+      .filter(id => id !== currentUserId);
 
     forkJoin({
       friends: this.friendsService.getMyFriends().pipe(catchError(() => of([]))),
       allUsers: this.usersService.getAll().pipe(catchError(() => of([])))
     }).subscribe(({ friends, allUsers }) => {
-      const friendOptions = friends.map(f => ({ id: f.friendUserId, name: f.friendName }));
+      const nonAdminUserIds = new Set(
+        allUsers
+          .filter(user => user.role !== UserRole.Admin)
+          .map(user => user.id)
+      );
+
+      const friendOptions = friends
+        .filter(friend =>
+          friend.friendUserId !== currentUserId &&
+          nonAdminUserIds.has(friend.friendUserId)
+        )
+        .map(f => ({ id: f.friendUserId, name: f.friendName }));
 
       const existingNonFriends = allUsers
-        .filter(u => existingIds.includes(u.id) && !friends.some(f => f.friendUserId === u.id))
+        .filter(u =>
+          u.id !== currentUserId &&
+          u.role !== UserRole.Admin &&
+          existingIds.includes(u.id) &&
+          !friends.some(f => f.friendUserId === u.id)
+        )
         .map(u => ({ id: u.id, name: u.name }));
 
       const merged = [...friendOptions, ...existingNonFriends];
@@ -76,7 +103,7 @@ export class SharingGroupFormDialogComponent implements OnInit {
 
   saving = false;
 
-  get hasMembers(): boolean { return this.selectedMemberIds.length > 0; }
+  get hasMembers(): boolean { return this.memberIdsForSave.length > 0; }
 
   onSubmit(): void {
     if (this.form.invalid || this.saving || !this.hasMembers) return;
@@ -87,7 +114,7 @@ export class SharingGroupFormDialogComponent implements OnInit {
     if (this.isEdit) {
       this.sharingGroupsService.update(this.data!.id, dto).subscribe({
         next: () => {
-          this.sharingGroupsService.updateMembers(this.data!.id, { userIds: this.selectedMemberIds }).subscribe({
+          this.sharingGroupsService.updateMembers(this.data!.id, { userIds: this.memberIdsForSave }).subscribe({
             next: result => {
               this.snackBar.open('Grupo actualizado', 'Cerrar', { duration: 3000 });
               this.dialogRef.close(result);
@@ -100,7 +127,7 @@ export class SharingGroupFormDialogComponent implements OnInit {
     } else {
       this.sharingGroupsService.create(dto).subscribe({
         next: group => {
-          this.sharingGroupsService.updateMembers(group.id, { userIds: this.selectedMemberIds }).subscribe({
+          this.sharingGroupsService.updateMembers(group.id, { userIds: this.memberIdsForSave }).subscribe({
             next: result => {
               this.snackBar.open('Grupo creado', 'Cerrar', { duration: 3000 });
               this.dialogRef.close(result);
