@@ -1,0 +1,62 @@
+﻿<h2 mat-dialog-title>{{ isEdit ? 'Editar' : 'Nueva' }} Compra en Cuotas</h2>
+<mat-dialog-content>
+  <form [formGroup]="form" class="dialog-form">
+    <div class="field">
+      <label>Nombre
+        <input formControlName="name" placeholder="Ej: Heladera Samsung" />
+      </label>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Monto total (Gs.)
+          <input formControlName="totalAmount" appThousands />
+        </label>
+      </div>
+      <div class="field">
+        <label>Descuento
+          <div class="discount-row">
+            <div class="type-toggle">
+              <button type="button" [class.active]="discountType() === 'gs'" (click)="setDiscountType('gs')">Gs.</button>
+              <button type="button" [class.active]="discountType() === 'pct'" (click)="setDiscountType('pct')">%</button>
+            </div>
+            @if (discountType() === 'gs') {
+              <input formControlName="discountAmount" appThousands />
+            } @else {
+              <input formControlName="discountPct" type="number" min="0" max="100" step="0.1" placeholder="0" />
+            }
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Cant. de cuotas{{ isEdit ? ' (fija)' : '' }}
+          <input formControlName="totalInstallments" type="number" min="1" />
+        </label>
+      </div>
+      <div class="field">
+        <label>Día vencimiento{{ isEdit ? ' (fijo)' : '' }}
+          <input formControlName="dueDay" type="number" min="1" max="28" placeholder="Ej: 10" />
+        </label>
+      </div>
+    </div>
+    <div class="field">
+      <label for="purchasePaymentMethod">Medio de pago (opcional)</label>
+      <app-select id="purchasePaymentMethod" formControlName="paymentMethodId" [items]="paymentMethods" nullLabel="Ninguno" />
+    </div>
+    <div class="field">
+      <label>Notas (opcional)
+        <textarea formControlName="notes" rows="2" placeholder="Observaciones..."></textarea>
+      </label>
+    </div>
+    @if (isEdit) {
+      <mat-checkbox formControlName="isActive">Activo</mat-checkbox>
+    }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-stroked-button mat-dialog-close class="btn-cancel">Cancelar</button>
+  <button mat-flat-button class="btn-primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
+    {{ isEdit ? 'Guardar' : 'Crear' }}
+  </button>
+</mat-dialog-actions>

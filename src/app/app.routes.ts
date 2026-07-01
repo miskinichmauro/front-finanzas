@@ -78,8 +78,13 @@ export const routes: Routes = [
       },
       {
         path: 'prestamos',
-        title: 'Préstamos',
+        title: 'Préstamos y Ahorros',
         loadComponent: () => import('./features/loans/loans.component').then(m => m.LoansComponent)
+      },
+      {
+        path: 'compras',
+        title: 'Compras en Cuotas',
+        loadComponent: () => import('./features/purchases/purchases.component').then(m => m.PurchasesComponent)
       },
       {
         path: 'xml-a-excel',

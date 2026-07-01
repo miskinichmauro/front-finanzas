@@ -292,7 +292,7 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-  <button mat-button class="xml-dialog-secondary-btn" mat-dialog-close>Cancelar</button>
+  <button mat-stroked-button mat-dialog-close class="btn-cancel">Cancelar</button>
   @if (isTransaction) {
     <button mat-flat-button class="btn-primary" (click)="createTransaction()" [disabled]="!canCreate || saving()">
       @if (saving()) { <mat-spinner diameter="18" /> } @else { Crear Transacción }

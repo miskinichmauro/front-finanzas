@@ -16,48 +16,119 @@
     </button>
 
     <div class="login-card">
-      <h2 class="login-card__title">Bienvenido de nuevo</h2>
-      <p class="login-card__sub">Ingresa tus credenciales para acceder al panel</p>
-
-      <form (ngSubmit)="submit()" #f="ngForm" class="login-form">
-
-        <div class="field">
-          <label class="field-label" for="login-email">Email <span class="required-mark">*</span></label>
-          <input id="login-email" type="text" [(ngModel)]="email" name="email"
-                 autocomplete="username" placeholder="tu@email.com"
-                 [class.field-input--invalid]="isEmailInvalid()" />
-        </div>
-
-        <div class="field">
-          <label class="field-label" for="login-password">Contraseña <span class="required-mark">*</span></label>
-          <div class="pass-wrapper" [class.pass-wrapper--invalid]="isPasswordInvalid()">
-            <input id="login-password" [type]="showPass() ? 'text' : 'password'"
-                   [(ngModel)]="password" name="password"
-                   [attr.autocomplete]="showPass() ? 'off' : 'current-password'"
-                   placeholder="********" />
-            <button type="button" class="toggle-pass" (click)="showPass.set(!showPass())">
-              <mat-icon>{{ showPass() ? 'visibility_off' : 'visibility' }}</mat-icon>
-            </button>
-          </div>
-        </div>
-
-        @if (error()) {
-          <div class="login-error">
-            <mat-icon>error_outline</mat-icon>
-            {{ error() }}
-          </div>
-        }
-
-        <button mat-flat-button class="login-btn" type="submit" [disabled]="loading()">
-          @if (loading()) {
-            <mat-spinner diameter="20" />
-          } @else {
-            Ingresar
-          }
+      <div class="login-tabs">
+        <button type="button" class="login-tab" [class.login-tab--active]="mode() === 'login'" (click)="switchMode('login')">
+          Iniciar sesión
         </button>
+        <button type="button" class="login-tab" [class.login-tab--active]="mode() === 'register'" (click)="switchMode('register')">
+          Crear cuenta
+        </button>
+      </div>
 
-        <p class="required-note">Los campos marcados con <span class="required-mark">*</span> son obligatorios.</p>
-      </form>
+      @if (mode() === 'login') {
+        <form (ngSubmit)="submit()" #f="ngForm" class="login-form">
+
+          <div class="field">
+            <label class="field-label" for="login-email">Email</label>
+            <input id="login-email" type="text" [(ngModel)]="email" name="email"
+                   autocomplete="username" placeholder="tu@email.com"
+                   [class.field-input--invalid]="isEmailInvalid()" />
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="login-password">Contraseña</label>
+            <div class="pass-wrapper" [class.pass-wrapper--invalid]="isPasswordInvalid()">
+              <input id="login-password" [type]="showPass() ? 'text' : 'password'"
+                     [(ngModel)]="password" name="password"
+                     [attr.autocomplete]="showPass() ? 'off' : 'current-password'"
+                     placeholder="********" />
+              <button type="button" class="toggle-pass" (click)="showPass.set(!showPass())">
+                <mat-icon>{{ showPass() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          @if (expired()) {
+            <div class="login-warning">
+              <mat-icon>schedule</mat-icon>
+              Tu sesión expiró. Por favor, ingresá de nuevo.
+            </div>
+          }
+
+          @if (error()) {
+            <div class="login-error">
+              <mat-icon>error_outline</mat-icon>
+              {{ error() }}
+            </div>
+          }
+
+          <button mat-flat-button class="login-btn" type="submit" [disabled]="loading()">
+            @if (loading()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Ingresar
+            }
+          </button>
+        </form>
+      }
+
+      @if (mode() === 'register') {
+        <form (ngSubmit)="submit()" #rf="ngForm" class="login-form">
+
+          <div class="field">
+            <label class="field-label" for="reg-name">Nombre completo</label>
+            <input id="reg-name" type="text" [(ngModel)]="name" name="name"
+                   autocomplete="name" placeholder="Tu nombre"
+                   [class.field-input--invalid]="isNameInvalid()" />
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="reg-email">Email</label>
+            <input id="reg-email" type="text" [(ngModel)]="email" name="email"
+                   autocomplete="email" placeholder="example@mail.com"
+                   [class.field-input--invalid]="isEmailInvalid()" />
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="reg-password">Contraseña</label>
+            <div class="pass-wrapper" [class.pass-wrapper--invalid]="isPasswordInvalid()">
+              <input id="reg-password" [type]="showPass() ? 'text' : 'password'"
+                     [(ngModel)]="password" name="password"
+                     autocomplete="new-password" placeholder="Mínimo 6 caracteres" />
+              <button type="button" class="toggle-pass" (click)="showPass.set(!showPass())">
+                <mat-icon>{{ showPass() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="reg-confirm">Confirmar contraseña</label>
+            <div class="pass-wrapper" [class.pass-wrapper--invalid]="isConfirmInvalid()">
+              <input id="reg-confirm" [type]="showConfirm() ? 'text' : 'password'"
+                     [(ngModel)]="confirmPass" name="confirmPass"
+                     autocomplete="new-password" placeholder="Repetí la contraseña" />
+              <button type="button" class="toggle-pass" (click)="showConfirm.set(!showConfirm())">
+                <mat-icon>{{ showConfirm() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          @if (error()) {
+            <div class="login-error">
+              <mat-icon>error_outline</mat-icon>
+              {{ error() }}
+            </div>
+          }
+
+          <button mat-flat-button class="login-btn" type="submit" [disabled]="loading()">
+            @if (loading()) {
+              <mat-spinner diameter="20" />
+            } @else {
+              Crear cuenta
+            }
+          </button>
+        </form>
+      }
     </div>
 
     <p class="login-footer">Finanzas - Panel personal</p>

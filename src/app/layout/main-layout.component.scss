@@ -1,5 +1,6 @@
 .app-container {
   height: 100vh;
+  height: 100dvh;
 }
 
 .app-sidenav {
@@ -174,6 +175,7 @@
   background: var(--bg-base) !important;
   display: flex;
   flex-direction: column;
+  overflow: hidden !important;
 }
 
 .app-topbar {

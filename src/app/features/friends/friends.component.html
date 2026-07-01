@@ -8,10 +8,33 @@
     <mat-spinner diameter="40"></mat-spinner>
   </div>
 } @else {
+
+  <!-- Tab bar — solo visible en mobile -->
+  <div class="mobile-tabs">
+    <button class="mobile-tab" [class.active]="mobileTab() === 'friends'" (click)="mobileTab.set('friends')">
+      <mat-icon>people</mat-icon>
+      <span>Amigos</span>
+      @if (friends().length > 0) {
+        <span class="tab-badge">{{ friends().length }}</span>
+      }
+    </button>
+    <button class="mobile-tab" [class.active]="mobileTab() === 'requests'" (click)="mobileTab.set('requests')">
+      <mat-icon>mail_outline</mat-icon>
+      <span>Solicitudes</span>
+      @if (pendingRequests().length > 0) {
+        <span class="tab-badge tab-badge--alert">{{ pendingRequests().length }}</span>
+      }
+    </button>
+    <button class="mobile-tab" [class.active]="mobileTab() === 'search'" (click)="mobileTab.set('search')">
+      <mat-icon>person_add</mat-icon>
+      <span>Agregar</span>
+    </button>
+  </div>
+
   <div class="friends-layout">
 
     <!-- Columna izquierda: Mis amigos -->
-    <div class="friends-panel">
+    <div class="friends-panel" [class.mobile-hidden]="mobileTab() !== 'friends'">
       <div class="panel-header">
         <h3>Mis amigos ({{ friends().length }})</h3>
       </div>
@@ -42,7 +65,7 @@
     </div>
 
     <!-- Columna central: Solicitudes -->
-    <div class="friends-panel">
+    <div class="friends-panel" [class.mobile-hidden]="mobileTab() !== 'requests'">
       <div class="panel-header">
         <h3>Solicitudes</h3>
       </div>
@@ -93,7 +116,7 @@
     </div>
 
     <!-- Columna derecha: Buscar usuarios -->
-    <div class="friends-panel">
+    <div class="friends-panel" [class.mobile-hidden]="mobileTab() !== 'search'">
       <div class="panel-header">
         <h3>Agregar amigos</h3>
         <p>Buscá por nombre o email</p>

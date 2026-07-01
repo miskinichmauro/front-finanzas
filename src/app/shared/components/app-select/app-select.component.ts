@@ -23,27 +23,33 @@ import { CommonModule } from '@angular/common';
       @if (open()) {
         <div class="asel__panel" [style.top]="panelTop" [style.left]="panelLeft" [style.width]="panelWidth">
           <div class="asel__search">
-            <input #searchInput type="text" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)"
-              placeholder="Buscar..." (click)="$event.stopPropagation()" />
+            <input #searchInput type="text" [ngModel]="searchText()" (ngModelChange)="onSearchChange($event)"
+              placeholder="Buscar..." (click)="$event.stopPropagation()" (keydown)="onKeydown($event)" />
           </div>
           <div class="asel__options">
             @if (showNullOption()) {
-              <button type="button" class="asel__option" [class.asel__option--selected]="value() === null || value() === undefined" (click)="select(null)">
+              <button type="button" class="asel__option"
+                [class.asel__option--selected]="value() === null || value() === undefined"
+                [class.asel__option--highlighted]="highlightedIndex() === 0"
+                (click)="select(null)">
                 <span>{{ nullLabel }}</span>
                 @if (value() === null || value() === undefined) {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 13.5 4 9"/></svg>
                 }
               </button>
             }
-            @for (item of filteredItems(); track getItemValue(item)) {
-              <button type="button" class="asel__option" [class.asel__option--selected]="isSelected(item)" (click)="select(getItemValue(item))">
+            @for (item of filteredItems(); track getItemValue(item); let i = $index) {
+              <button type="button" class="asel__option"
+                [class.asel__option--selected]="isSelected(item)"
+                [class.asel__option--highlighted]="isItemHighlighted(i)"
+                (click)="select(getItemValue(item))">
                 <span>{{ getItemLabel(item) }}</span>
                 @if (isSelected(item)) {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 13.5 4 9"/></svg>
                 }
               </button>
             }
-            @if (filteredItems().length === 0) {
+            @if (filteredItems().length === 0 && !showNullOption()) {
               <div class="asel__empty">Sin resultados</div>
             }
           </div>
@@ -185,12 +191,19 @@ import { CommonModule } from '@angular/common';
 
         &:hover { background: var(--bg-hover); }
 
+        &--highlighted {
+          background: var(--bg-hover);
+          outline: 2px solid rgba(99, 102, 241, 0.35);
+          outline-offset: -2px;
+        }
+
         &--selected {
           background: transparent;
           font-weight: 500;
           color: var(--text-primary);
 
           &:hover { background: var(--bg-hover); }
+          &.asel__option--highlighted { background: var(--bg-hover); }
         }
       }
 
@@ -220,6 +233,7 @@ export class AppSelectComponent implements ControlValueAccessor {
   isDisabled = false;
   open = signal(false);
   searchText = signal('');
+  highlightedIndex = signal(-1);
   panelTop = '0px';
   panelLeft = '0px';
   panelWidth = '0px';
@@ -232,6 +246,10 @@ export class AppSelectComponent implements ControlValueAccessor {
 
   get componentDisabled(): boolean {
     return this.isDisabled || this.loading || !this.itemsReady();
+  }
+
+  private get totalOptions(): number {
+    return (this.showNullOption() ? 1 : 0) + this.filteredItems().length;
   }
 
   filteredItems = computed(() => {
@@ -259,8 +277,13 @@ export class AppSelectComponent implements ControlValueAccessor {
     return (v === null || v === undefined) && this.nullLabel === null;
   });
 
+  isItemHighlighted(itemIndex: number): boolean {
+    const offset = this.showNullOption() ? 1 : 0;
+    return this.highlightedIndex() === itemIndex + offset;
+  }
+
   private normalize(value: string): string {
-    return value.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').trim();
+    return value.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
   }
 
   getItemValue(item: any): any {
@@ -273,6 +296,56 @@ export class AppSelectComponent implements ControlValueAccessor {
 
   isSelected(item: any): boolean {
     return this.getItemValue(item) == this.value();
+  }
+
+  onSearchChange(value: string): void {
+    this.searchText.set(value);
+    this.highlightedIndex.set(-1);
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    const total = this.totalOptions;
+    if (total === 0) return;
+
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.highlightedIndex.update(i => (i + 1) % total);
+        this.scrollHighlightedIntoView();
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        this.highlightedIndex.update(i => (i - 1 + total) % total);
+        this.scrollHighlightedIntoView();
+        break;
+      case 'Enter':
+        event.preventDefault();
+        this.selectHighlighted();
+        break;
+      case 'Escape':
+        event.preventDefault();
+        this.open.set(false);
+        break;
+    }
+  }
+
+  private selectHighlighted(): void {
+    const idx = this.highlightedIndex();
+    if (idx < 0) return;
+    if (this.showNullOption() && idx === 0) {
+      this.select(null);
+    } else {
+      const itemIdx = this.showNullOption() ? idx - 1 : idx;
+      const item = this.filteredItems()[itemIdx];
+      if (item) this.select(this.getItemValue(item));
+    }
+  }
+
+  private scrollHighlightedIntoView(): void {
+    setTimeout(() => {
+      const el = this.el.nativeElement.querySelector('.asel__option--highlighted') as HTMLElement | null;
+      el?.scrollIntoView({ block: 'nearest' });
+    });
   }
 
   toggle(): void {
@@ -291,6 +364,7 @@ export class AppSelectComponent implements ControlValueAccessor {
     this.open.update(v => !v);
     if (this.open()) {
       this.searchText.set('');
+      this.highlightedIndex.set(-1);
       setTimeout(() => this.el.nativeElement.querySelector('.asel__search input')?.focus());
     }
   }
@@ -312,7 +386,3 @@ export class AppSelectComponent implements ControlValueAccessor {
     if (!this.el.nativeElement.contains(e.target)) this.open.set(false);
   }
 }
-
-
-
-

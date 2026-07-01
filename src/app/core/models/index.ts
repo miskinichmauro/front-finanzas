@@ -13,3 +13,4 @@ export * from './loan.model';
 export * from './friend.model';
 export * from './xml-invoice.model';
 export * from './debt.model';
+export * from './purchase.model';

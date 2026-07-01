@@ -36,6 +36,7 @@ export class FriendsComponent implements OnInit {
   sentRequests = signal<SentFriendRequestDto[]>([]);
   allUsers = signal<UserDto[]>([]);
   loading = signal(false);
+  mobileTab = signal<'friends' | 'requests' | 'search'>('friends');
 
   searchText = signal('');
   friendSearchText = signal('');

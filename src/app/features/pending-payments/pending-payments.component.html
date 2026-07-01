@@ -122,6 +122,97 @@
   </div>
 }
 
+@if (pageMode === 'purchases') {
+  <div class="table-card">
+    <div class="table-scroll">
+      <table mat-table [dataSource]="purchaseDataSource">
+
+        <ng-container matColumnDef="purchaseName">
+          <th mat-header-cell *matHeaderCellDef>Compra</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="purchase-name">{{ row.purchaseName }}</span>
+            @if (row.paymentMethodName) {
+              <span class="purchase-method">{{ row.paymentMethodName }}</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="purchaseInstallment">
+          <th mat-header-cell *matHeaderCellDef class="text-center">Cuota</th>
+          <td mat-cell *matCellDef="let row" class="text-center">
+            {{ row.installmentNumber }}/{{ row.totalInstallments }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="purchaseDueDate">
+          <th mat-header-cell *matHeaderCellDef>Vencimiento</th>
+          <td mat-cell *matCellDef="let row">{{ formatDueDate(row.dueDate) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="purchaseAmount">
+          <th mat-header-cell *matHeaderCellDef class="text-right">Monto</th>
+          <td mat-cell *matCellDef="let row" class="text-right col-amount">Gs. {{ formatAmount(row.amount) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="purchaseStatus">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let row">
+            @if (row.isPaid) {
+              <span class="badge badge--green">Pagado</span>
+              @if (row.paymentReference) {
+                <mat-icon class="info-icon" [matTooltip]="'Comprobante: ' + row.paymentReference">receipt</mat-icon>
+              }
+            } @else {
+              <span class="badge badge--amber">Pendiente</span>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="purchaseActions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let row" class="col-actions">
+            @if (!row.isPaid) {
+              <button mat-stroked-button class="btn-action" (click)="markInstallmentPaid(row)">
+                <mat-icon>payment</mat-icon>Marcar pagado
+              </button>
+            } @else {
+              <button mat-stroked-button class="btn-action btn-reject" (click)="unpayInstallment(row)"
+                      matTooltip="Desmarcar como pagado">
+                <mat-icon>undo</mat-icon>Desmarcar
+              </button>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="purchaseColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: purchaseColumns;"
+            [class.row-paid]="row.isPaid"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell empty-row-cell" [attr.colspan]="purchaseColumns.length">
+            @if (loadingPurchases()) {
+              <div class="loading-center"><mat-spinner /></div>
+            } @else {
+              <div class="empty-state">
+                <mat-icon>credit_card_off</mat-icon>
+                <span>No hay cuotas para este período.</span>
+              </div>
+            }
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="table-footer">
+      @if (purchaseDataSource.data.length && !loadingPurchases()) {
+        <div class="table-total-bar">
+          <span class="total-label">Total pendiente</span>
+          <span class="total-amount">Gs. {{ formatAmount(purchasePendingTotal) }}</span>
+        </div>
+      }
+      <mat-paginator #purchasePaginator [pageSizeOptions]="[10, 25, 50]" pageSize="25" showFirstLastButtons />
+    </div>
+  </div>
+}
+
 @if (pageMode === 'debts') {
   <div class="table-card">
     <div class="table-scroll">

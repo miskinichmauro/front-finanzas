@@ -18,10 +18,12 @@ import { PeriodExpensesService } from '../../core/services/period-expenses.servi
 import { DebtsService } from '../../core/services/debts.service';
 import { FriendsService } from '../../core/services/friends.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PurchasesService } from '../../core/services/purchases.service';
 import { CategoryDto } from '../../core/models';
 import { PeriodExpenseDto, RegisterPeriodExpensePaymentDto } from '../../core/models/period-expense.model';
 import { DebtDto, CreateDebtDto, SubmitPaymentDto } from '../../core/models/debt.model';
 import { FriendDto } from '../../core/models/friend.model';
+import { UpcomingInstallmentDto } from '../../core/models/purchase.model';
 import { CategoriesService } from '../../core/services/categories.service';
 import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
 
@@ -273,24 +275,29 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
   private readonly periodExpensesService = inject(PeriodExpensesService);
   private readonly debtsService          = inject(DebtsService);
   private readonly categoriesService     = inject(CategoriesService);
+  private readonly purchasesService      = inject(PurchasesService);
   private readonly auth                  = inject(AuthService);
   private readonly dialog                = inject(MatDialog);
   private readonly snackBar              = inject(MatSnackBar);
 
-  @ViewChild('periodPaginator') paginator!: MatPaginator;
-  @ViewChild('debtPaginator')   debtPaginator!: MatPaginator;
+  @ViewChild('periodPaginator')   paginator!: MatPaginator;
+  @ViewChild('debtPaginator')     debtPaginator!: MatPaginator;
+  @ViewChild('purchasePaginator') purchasePaginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
-  displayedColumns = ['description', 'categoryName', 'amount', 'period', 'actions'];
-  debtColumns      = ['debtCounterpart', 'debtDescription', 'debtAmount', 'debtDate', 'debtStatus', 'debtActions'];
+  displayedColumns  = ['description', 'categoryName', 'amount', 'period', 'actions'];
+  debtColumns       = ['debtCounterpart', 'debtDescription', 'debtAmount', 'debtDate', 'debtStatus', 'debtActions'];
+  purchaseColumns   = ['purchaseName', 'purchaseInstallment', 'purchaseDueDate', 'purchaseAmount', 'purchaseStatus', 'purchaseActions'];
 
-  loading      = signal(false);
-  loadingDebts = signal(false);
+  loading         = signal(false);
+  loadingDebts    = signal(false);
+  loadingPurchases = signal(false);
 
   pageMode  = 'period';
   pageModes = [
-    { value: 'period', label: 'Gastos del período' },
-    { value: 'debts',  label: 'Deudas con amigos' }
+    { value: 'period',    label: 'Gastos del período' },
+    { value: 'debts',     label: 'Deudas con amigos' },
+    { value: 'purchases', label: 'Cuotas de compras' }
   ];
 
   allPeriods        = false;
@@ -302,8 +309,9 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
   counterpartOptions: { value: string; label: string }[] = [{ value: '', label: 'Todos' }];
   private allDebtsRaw: DebtDto[] = [];
 
-  dataSource     = new MatTableDataSource<PeriodExpenseDto>([]);
-  debtDataSource = new MatTableDataSource<DebtDto>([]);
+  dataSource          = new MatTableDataSource<PeriodExpenseDto>([]);
+  debtDataSource      = new MatTableDataSource<DebtDto>([]);
+  purchaseDataSource  = new MatTableDataSource<UpcomingInstallmentDto>([]);
   categories: CategoryDto[] = [];
 
   years  = [2023, 2024, 2025, 2026, 2027].map(y => ({ value: y, label: y.toString() }));
@@ -323,8 +331,9 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
     { value: 'Rejected',             label: 'Rechazado' }
   ];
 
-  get periodTotal(): number   { return this.dataSource.data.reduce((s, r) => s + r.amount, 0); }
-  get debtTotal(): number     { return this.debtDataSource.data.reduce((s, r) => s + r.amount, 0); }
+  get periodTotal(): number    { return this.dataSource.data.reduce((s, r) => s + r.amount, 0); }
+  get debtTotal(): number      { return this.debtDataSource.data.reduce((s, r) => s + r.amount, 0); }
+  get purchasePendingTotal(): number { return this.purchaseDataSource.data.filter(r => !r.isPaid).reduce((s, r) => s + r.amount, 0); }
   get currentUserId(): string { return this.auth.currentUser()?.userId ?? ''; }
 
   isDebtor(debt: DebtDto): boolean    { return debt.debtorUserId === this.currentUserId; }
@@ -345,13 +354,16 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
   onPageModeChange(): void {
     this.loadData();
     setTimeout(() => {
-      this.debtDataSource.paginator = this.debtPaginator ?? null;
+      this.debtDataSource.paginator     = this.debtPaginator     ?? null;
+      this.purchaseDataSource.paginator = this.purchasePaginator ?? null;
     });
   }
 
   loadData(): void {
     if (this.pageMode === 'period') {
       this.loadPeriodExpenses();
+    } else if (this.pageMode === 'purchases') {
+      this.loadPurchaseInstallments();
     } else {
       this.loadDebts();
     }
@@ -526,6 +538,47 @@ export class PendingPaymentsComponent implements OnInit, AfterViewInit {
       next: () => { this.snackBar.open('Deuda eliminada', 'Cerrar', { duration: 2500 }); this.loadDebts(); },
       error: () => this.snackBar.open('Error al eliminar', 'Cerrar', { duration: 3000 })
     });
+  }
+
+  loadPurchaseInstallments(): void {
+    this.loadingPurchases.set(true);
+    this.purchaseDataSource.data = [];
+    this.purchasesService.getUpcomingInstallments(this.filterYear, this.filterMonth).subscribe({
+      next: data => { this.purchaseDataSource.data = data; this.loadingPurchases.set(false); },
+      error: ()   => { this.snackBar.open('Error al cargar cuotas', 'Cerrar', { duration: 3000 }); this.loadingPurchases.set(false); }
+    });
+  }
+
+  markInstallmentPaid(item: UpcomingInstallmentDto): void {
+    const ref = this.dialog.open(RegisterPendingPaymentDialogComponent, {
+      data: { description: `${item.purchaseName} — Cuota ${item.installmentNumber}/${item.totalInstallments}`, amount: item.amount },
+      width: '480px'
+    });
+    ref.afterClosed().subscribe((result?: { receiptNumber: string; paidAt: string; paymentDescription: string }) => {
+      if (!result) return;
+      this.purchasesService.updateInstallment(item.purchaseId, item.installmentId, {
+        isPaid:             true,
+        paymentReference:   result.receiptNumber || undefined,
+        paymentDescription: result.paymentDescription || undefined
+      }).subscribe({
+        next: () => { this.snackBar.open('Cuota marcada como pagada', 'Cerrar', { duration: 2500 }); this.loadPurchaseInstallments(); },
+        error: () => this.snackBar.open('Error al marcar como pagada', 'Cerrar', { duration: 3000 })
+      });
+    });
+  }
+
+  unpayInstallment(item: UpcomingInstallmentDto): void {
+    this.purchasesService.updateInstallment(item.purchaseId, item.installmentId, { isPaid: false }).subscribe({
+      next: () => { this.snackBar.open('Cuota marcada como pendiente', 'Cerrar', { duration: 2500 }); this.loadPurchaseInstallments(); },
+      error: () => this.snackBar.open('Error al actualizar', 'Cerrar', { duration: 3000 })
+    });
+  }
+
+  formatDueDate(iso: string): string {
+    try {
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    } catch { return iso; }
   }
 }
 

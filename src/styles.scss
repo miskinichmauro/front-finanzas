@@ -324,6 +324,13 @@ app-page-header {
     width: calc(40px * var(--ui-scale)) !important;
     height: calc(40px * var(--ui-scale)) !important;
   }
+
+  @media (max-width: 768px) {
+    position: sticky;
+    left: 0;
+    width: 100vw;
+    box-sizing: border-box;
+  }
 }
 
 .mat-mdc-button-base {
@@ -333,6 +340,27 @@ app-page-header {
   .mat-mdc-button-persistent-ripple,
   .mat-mdc-focus-indicator {
     border-radius: calc(8px * var(--ui-scale)) !important;
+  }
+}
+
+.btn-cancel {
+  height: calc(30px * var(--ui-scale)) !important;
+  background: var(--bg-surface-alt) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--border-input) !important;
+  border-radius: calc(8px * var(--ui-scale)) !important;
+  font-weight: 500 !important;
+  padding: 0 calc(8px * var(--ui-scale)) !important;
+  font-size: calc(11.5px * var(--ui-scale)) !important;
+  letter-spacing: 0 !important;
+  transition: background 0.15s !important;
+
+  &:hover { background: var(--bg-hover) !important; }
+
+  &:disabled,
+  &.mat-mdc-button-disabled {
+    opacity: 0.45 !important;
+    cursor: default !important;
   }
 }
 

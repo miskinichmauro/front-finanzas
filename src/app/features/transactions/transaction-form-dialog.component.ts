@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -25,7 +25,56 @@ import { TransactionDto, UserDto, CategoryDto, PaymentMethodDto, CommerceDto } f
     AppSelectComponent,
     ThousandsDirective
   ],
-  templateUrl: './transaction-form-dialog.component.html'
+  templateUrl: './transaction-form-dialog.component.html',
+  styles: [`
+    .discount-row {
+      display: flex;
+      gap: calc(6px * var(--ui-scale));
+      align-items: center;
+    }
+    .type-toggle {
+      display: flex;
+      border: 1.5px solid var(--border-input);
+      border-radius: calc(8px * var(--ui-scale));
+      overflow: hidden;
+      flex-shrink: 0;
+      height: calc(30px * var(--ui-scale));
+      button {
+        width: calc(34px * var(--ui-scale));
+        padding: 0;
+        border: none;
+        background: var(--bg-input);
+        font-size: calc(11px * var(--ui-scale));
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s;
+        height: 100%;
+        &.active {
+          background: #6366f1;
+          color: #fff;
+        }
+      }
+    }
+    .discount-row input {
+      flex: 1;
+      padding: calc(6px * var(--ui-scale)) calc(10px * var(--ui-scale));
+      min-height: calc(30px * var(--ui-scale));
+      border: 1.5px solid var(--border-input);
+      border-radius: calc(8px * var(--ui-scale));
+      font-size: calc(11.5px * var(--ui-scale));
+      font-family: Roboto, "Helvetica Neue", sans-serif;
+      color: var(--text-primary);
+      background: var(--bg-input);
+      outline: none;
+      box-sizing: border-box;
+      width: 100%;
+      &:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+      }
+    }
+  `]
 })
 export class TransactionFormDialogComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -40,6 +89,7 @@ export class TransactionFormDialogComponent implements OnInit {
   data = inject<TransactionDto | null>(MAT_DIALOG_DATA);
 
   readonly isAdmin = this.authService.isAdmin;
+  discountType = signal<'gs' | 'pct'>('gs');
 
   users: UserDto[] = null as any;
   categories: CategoryDto[] = null as any;
@@ -63,6 +113,8 @@ export class TransactionFormDialogComponent implements OnInit {
   get isEdit(): boolean { return !!this.data; }
 
   ngOnInit(): void {
+    this.form.get('netAmount')?.disable();
+
     if (this.isAdmin()) {
       this.usersService.getAll().subscribe(u => this.users = u);
     } else {
@@ -100,8 +152,29 @@ export class TransactionFormDialogComponent implements OnInit {
     }
   }
 
-  onGrossAmountChange(): void { this.recalcFromPercent(); }
-  onDiscountPercentChange(): void { this.recalcFromPercent(); }
+  setDiscountType(type: 'gs' | 'pct'): void {
+    if (type === this.discountType()) return;
+    const gross = this.form.get('grossAmount')?.value ?? 0;
+    if (type === 'pct') {
+      const disc = this.form.get('discountAmount')?.value ?? 0;
+      const pct = gross > 0 ? Math.round(disc / gross * 1000) / 10 : 0;
+      this.form.patchValue({ discountPercent: pct }, { emitEvent: false });
+    } else {
+      const pct = this.form.get('discountPercent')?.value ?? 0;
+      this.form.patchValue({ discountAmount: Math.round(gross * pct / 100) }, { emitEvent: false });
+    }
+    this.discountType.set(type);
+  }
+
+  onGrossAmountChange(): void {
+    if (this.discountType() === 'pct') this.recalcFromPercent();
+    else this.recalcFromAmount();
+  }
+
+  onDiscountInput(): void {
+    if (this.discountType() === 'pct') this.recalcFromPercent();
+    else this.recalcFromAmount();
+  }
 
   private recalcFromPercent(): void {
     const gross = this.form.get('grossAmount')?.value ?? 0;
@@ -110,7 +183,7 @@ export class TransactionFormDialogComponent implements OnInit {
     this.form.patchValue({ discountAmount: discountAmt, netAmount: gross - discountAmt }, { emitEvent: false });
   }
 
-  onDiscountAmountChange(): void {
+  private recalcFromAmount(): void {
     const gross = this.form.get('grossAmount')?.value ?? 0;
     const discount = this.form.get('discountAmount')?.value ?? 0;
     const pct = gross > 0 ? Math.round(discount / gross * 100) : 0;

@@ -1,11 +1,11 @@
 ﻿<app-page-header title="Préstamos y Ahorros" subtitle="Control de cuotas y deudas activas" />
 
 <div class="page-toolbar">
-  <mat-button-toggle-group [(ngModel)]="filterType" aria-label="Filtro">
-    <mat-button-toggle value="">Todos</mat-button-toggle>
-    <mat-button-toggle value="Prestamo">Préstamos</mat-button-toggle>
-    <mat-button-toggle value="Ahorro">Ahorros</mat-button-toggle>
-  </mat-button-toggle-group>
+  <div class="toolbar-field">
+    <label>Tipo
+      <app-select [items]="typeOptions" nullLabel="Todos" [(ngModel)]="filterType" style="width: 130px" />
+    </label>
+  </div>
   <div class="toolbar-field">
     <label>Buscar
       <input type="search" [(ngModel)]="searchText" placeholder="Busqueda" style="width: 180px" />
@@ -24,7 +24,7 @@
 } @else {
 
   @if (prestamos.length) {
-    <div class="section-label">Préstamos</div>
+    <div class="section-label">Préstamos y Ahorros</div>
     <mat-accordion class="loan-accordion" multi>
       @for (loan of prestamos; track loan.id) {
         <mat-expansion-panel (opened)="loadInstallments(loan.id)">
@@ -177,7 +177,7 @@
     <div class="table-card">
       <div class="empty-state">
         <mat-icon>account_balance</mat-icon>
-        <span>No hay préstamos registrados</span>
+        <span>No hay préstamos o ahorros registrados</span>
       </div>
     </div>
   }

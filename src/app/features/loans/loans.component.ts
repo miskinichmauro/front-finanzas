@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -25,8 +25,8 @@ import { formatDisplayedAmount } from '../../shared/utils/amount-display.util';
     FormsModule,
     MatExpansionModule,
     MatButtonModule,
-    MatButtonToggleModule,
     MatIconModule,
+    AppSelectComponent,
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
@@ -44,8 +44,12 @@ export class LoansComponent implements OnInit {
   loans = signal<LoanDto[]>([]);
   installmentsMap = signal<Record<string, LoanInstallmentDto[]>>({});
   loadingInstallments = new Set<string>();
-  filterType = '';
+  filterType: string | null = null;
   searchText = '';
+  readonly typeOptions = [
+    { id: 'Prestamo', name: 'Préstamos' },
+    { id: 'Ahorro',   name: 'Ahorros'   }
+  ];
 
   get prestamos(): LoanDto[] {
     const f = this.searchText.toLowerCase();

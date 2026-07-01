@@ -31,10 +31,16 @@ export class AuthService {
       .pipe(tap(user => this.setUser(user)));
   }
 
-  logout(): void {
+  register(name: string, email: string, password: string) {
+    return this.http
+      .post<AuthUser>(`${environment.apiUrl}/api/auth/register`, { name, email, password }, { withCredentials: true })
+      .pipe(tap(user => this.setUser(user)));
+  }
+
+  logout(expired = false): void {
     this._user.set(null);
     localStorage.removeItem(STORAGE_KEY);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login'], expired ? { state: { expired: true } } : undefined);
     this.http.post(`${environment.apiUrl}/api/auth/logout`, {}, { withCredentials: true }).subscribe();
   }
 

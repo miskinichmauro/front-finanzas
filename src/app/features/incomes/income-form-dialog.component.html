@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>{{ isEdit ? 'Editar Ingreso' : 'Nuevo Ingreso' }}</h2>
+﻿<h2 mat-dialog-title>{{ isEdit ? 'Editar Ingreso' : 'Nuevo Ingreso' }}</h2>
 <mat-dialog-content>
   <form [formGroup]="form" class="dialog-form">
     @if (isAdmin()) {
@@ -64,7 +64,7 @@
   </form>
 </mat-dialog-content>
 <mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-stroked-button mat-dialog-close class="btn-cancel">Cancelar</button>
   <button mat-flat-button class="btn-primary" (click)="onSubmit()" [disabled]="form.invalid || saving">
     {{ isEdit ? 'Guardar' : 'Crear' }}
   </button>
