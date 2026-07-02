@@ -266,4 +266,39 @@
   flex-direction: column;
 }
 
+@media (max-width: 600px) {
+  .app-topbar {
+    height: 56px;
+    padding: 0 8px;
+    gap: 4px;
+    align-items: center;
+
+    .menu-btn,
+    .logout-btn,
+    .theme-btn {
+      width: 44px !important;
+      height: 44px !important;
+      line-height: 44px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .topbar-user {
+      gap: 2px;
+      align-items: center;
+    }
+
+    .topbar-avatar {
+      width: 32px;
+      height: 32px;
+      align-self: center;
+    }
+  }
+
+  .app-main {
+    padding: 16px 12px 32px;
+    overflow-x: hidden;
+  }
+}
 

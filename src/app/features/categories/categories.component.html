@@ -7,10 +7,37 @@
     </label>
   </div>
   <div class="flex-1"></div>
+  <button mat-stroked-button class="btn-secondary" (click)="openCreateGroup()">
+    <mat-icon>create_new_folder</mat-icon>Nuevo Grupo
+  </button>
   <button mat-flat-button class="btn-primary" (click)="openCreate()">
     <mat-icon>add</mat-icon>Nueva Categoría
   </button>
 </div>
+
+<section class="groups-section">
+  <div class="groups-section__header">
+    <h2>Grupos</h2>
+    <span>Organizan las categorías en el dashboard</span>
+  </div>
+  <div class="groups-list">
+    @for (group of groups(); track group.id) {
+      <div class="group-card" [class.group-card--default]="group.isDefault">
+        <div class="group-card__name">
+          <mat-icon>{{ group.isDefault ? 'folder_special' : 'folder' }}</mat-icon>
+          <span>{{ group.name }}</span>
+          @if (group.isDefault) { <small>Predeterminado</small> }
+        </div>
+        @if (!group.isDefault) {
+          <div class="group-card__actions">
+            <button mat-icon-button title="Editar grupo" (click)="openEditGroup(group)"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button title="Eliminar grupo" (click)="openDeleteGroup(group)"><mat-icon>delete</mat-icon></button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</section>
 
 <div class="table-card">
   <div class="table-scroll">
@@ -20,9 +47,9 @@
       <td mat-cell *matCellDef="let row">{{ row.name }}</td>
     </ng-container>
 
-    <ng-container matColumnDef="parentCategoryId">
-      <th mat-header-cell *matHeaderCellDef>Categoría Padre</th>
-      <td mat-cell *matCellDef="let row">{{ getParentName(row.parentCategoryId) }}</td>
+    <ng-container matColumnDef="groupName">
+      <th mat-header-cell *matHeaderCellDef>Grupo</th>
+      <td mat-cell *matCellDef="let row">{{ row.groupName }}</td>
     </ng-container>
 
     <ng-container matColumnDef="actions">

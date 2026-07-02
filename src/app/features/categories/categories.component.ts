@@ -13,8 +13,10 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
 import { RowActionsComponent } from '../../shared/components/row-actions/row-actions.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { CategoryFormDialogComponent } from './category-form-dialog.component';
+import { CategoryGroupFormDialogComponent } from './category-group-form-dialog.component';
 import { CategoriesService } from '../../core/services/categories.service';
-import { CategoryDto } from '../../core/models';
+import { CategoryGroupsService } from '../../core/services/category-groups.service';
+import { CategoryDto, CategoryGroupDto } from '../../core/models';
 
 @Component({
   selector: 'app-categories',
@@ -31,20 +33,23 @@ import { CategoryDto } from '../../core/models';
     PageHeaderComponent,
     RowActionsComponent
   ],
-  templateUrl: './categories.component.html'
+  templateUrl: './categories.component.html',
+  styleUrl: './categories.component.scss'
 })
 export class CategoriesComponent implements OnInit {
   private categoriesService = inject(CategoriesService);
+  private groupsService = inject(CategoryGroupsService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
   @ViewChild(MatPaginator, { static: true }) paginator!: MatPaginator;
   @ViewChild(MatSort, { static: true }) sort!: MatSort;
 
-  displayedColumns = ['name', 'parentCategoryId', 'actions'];
+  displayedColumns = ['name', 'groupName', 'actions'];
   loading = signal(false);
   dataSource = new MatTableDataSource<CategoryDto>([]);
   allCategories: CategoryDto[] = [];
+  groups = signal<CategoryGroupDto[]>([]);
   searchText = '';
 
   ngOnInit(): void {
@@ -68,16 +73,12 @@ export class CategoriesComponent implements OnInit {
         this.loading.set(false);
       }
     });
+    this.groupsService.getAll().subscribe({ next: groups => this.groups.set(groups) });
   }
 
   applyFilter(): void {
     this.dataSource.filter = this.searchText.trim().toLowerCase();
     if (this.dataSource.paginator) this.dataSource.paginator.firstPage();
-  }
-
-  getParentName(parentId: string | null): string {
-    if (!parentId) return '—';
-    return this.allCategories.find(c => c.id === parentId)?.name ?? '—';
   }
 
   openCreate(): void {
@@ -104,6 +105,31 @@ export class CategoriesComponent implements OnInit {
           error: () => this.snackBar.open('Error al eliminar', 'Cerrar', { duration: 3000 })
         });
       }
+    });
+  }
+
+  openCreateGroup(): void {
+    const ref = this.dialog.open(CategoryGroupFormDialogComponent, { data: null, width: '420px' });
+    ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
+  }
+
+  openEditGroup(group: CategoryGroupDto): void {
+    if (group.isDefault) return;
+    const ref = this.dialog.open(CategoryGroupFormDialogComponent, { data: group, width: '420px' });
+    ref.afterClosed().subscribe(result => { if (result) this.loadData(); });
+  }
+
+  openDeleteGroup(group: CategoryGroupDto): void {
+    if (group.isDefault) return;
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: { title: 'Eliminar Grupo', message: `¿Eliminar el grupo "${group.name}"? Solo es posible si no contiene categorías.` }
+    });
+    ref.afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      this.groupsService.delete(group.id).subscribe({
+        next: () => { this.snackBar.open('Grupo eliminado', 'Cerrar', { duration: 3000 }); this.loadData(); },
+        error: () => this.snackBar.open('El grupo contiene categorías y no se puede eliminar', 'Cerrar', { duration: 3500 })
+      });
     });
   }
 }

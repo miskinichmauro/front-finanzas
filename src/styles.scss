@@ -326,9 +326,9 @@ app-page-header {
   }
 
   @media (max-width: 768px) {
-    position: sticky;
-    left: 0;
-    width: 100vw;
+    position: static;
+    left: auto;
+    width: 100%;
     box-sizing: border-box;
   }
 }
@@ -867,6 +867,18 @@ mat-dialog-actions {
   }
 }
 
+/* Prevent Safari on iOS from zooming the viewport when the keyboard opens. */
+@media (max-width: 600px) {
+  @supports (-webkit-touch-callout: none) {
+    input,
+    select,
+    textarea,
+    .asel__search input {
+      font-size: 16px !important;
+    }
+  }
+}
+
 .mat-button-toggle-group {
   border: 1.5px solid var(--border-input) !important;
   border-radius: calc(10px * var(--ui-scale)) !important;
@@ -1050,11 +1062,262 @@ div.mat-mdc-select-panel {
   }
 }
 
+/* Mobile layout: compact controls, card-based data rows and usable dialogs. */
+@media (max-width: 600px) {
+  app-page-header .page-header {
+    margin-bottom: 16px;
 
+    &__title { font-size: 22px; line-height: 1.2; }
+    &__subtitle { font-size: 13px; line-height: 1.4; }
 
+    &:not(:has(.page-header__subtitle)) { margin-bottom: 20px; }
+  }
 
+  .page-toolbar {
+    padding: 10px;
+    gap: 8px;
+    align-items: stretch;
 
+    > .flex-1 { display: none; }
 
+    > input,
+    > select,
+    > app-select,
+    > app-multi-select,
+    > .toolbar-field {
+      width: 100% !important;
+      flex: 1 1 100%;
+    }
 
+    > button {
+      flex: 0 0 auto;
+      align-self: flex-end;
+      min-height: 30px !important;
 
+      &:first-of-type {
+        margin-left: auto !important;
+      }
+    }
 
+    input,
+    select {
+      height: calc(28px * var(--ui-scale)) !important;
+      min-height: calc(28px * var(--ui-scale)) !important;
+      line-height: calc(28px * var(--ui-scale)) !important;
+      font-size: calc(11.5px * var(--ui-scale)) !important;
+      box-sizing: border-box;
+    }
+
+    &:has(> .toolbar-field:first-child:nth-last-child(3)) {
+      align-items: flex-end;
+
+      > .toolbar-field {
+        width: auto !important;
+        flex: 1 1 0;
+        min-width: 0;
+      }
+    }
+  }
+
+  .table-card {
+    display: block;
+    flex: 0 0 auto;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    max-height: none;
+
+    .table-scroll {
+      display: block;
+      flex: 0 0 auto;
+      overflow: visible;
+    }
+
+    table.mat-mdc-table {
+      min-width: 0;
+      border-collapse: separate;
+      border-spacing: 0 10px;
+      background: transparent;
+    }
+
+    .mat-mdc-header-row {
+      display: none;
+    }
+
+    .mat-mdc-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      height: auto;
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-surface);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .mat-mdc-cell {
+      min-height: 0;
+      padding: 8px 0 !important;
+      border-bottom: 1px solid var(--border-light) !important;
+      display: grid;
+      grid-template-columns: minmax(96px, 38%) minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      text-align: right !important;
+      white-space: normal;
+      overflow-wrap: anywhere;
+
+      &::before {
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.25;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+      }
+
+      &:last-child { border-bottom: 0 !important; }
+
+      .badge { justify-self: end; }
+
+      &.mat-column-actions {
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 10px !important;
+      }
+    }
+
+    .mat-mdc-no-data-row {
+      display: block;
+
+      .mat-mdc-cell {
+        display: block;
+        text-align: center !important;
+      }
+
+      .mat-mdc-cell::before { content: none; }
+    }
+
+    .mat-column-name::before { content: 'Nombre'; }
+    .mat-column-description::before { content: 'Descripción'; }
+    .mat-column-address::before { content: 'Dirección'; }
+    .mat-column-date::before { content: 'Fecha'; }
+    .mat-column-period::before { content: 'Periodo'; }
+    .mat-column-type::before { content: 'Tipo'; }
+    .mat-column-userName::before { content: 'Usuario'; }
+    .mat-column-categoryName::before { content: 'Categoría'; }
+    .mat-column-parentCategoryId::before { content: 'Categoría padre'; }
+    .mat-column-commerceName::before { content: 'Comercio'; }
+    .mat-column-bankName::before { content: 'Banco'; }
+    .mat-column-lastDigits::before { content: 'Terminación'; }
+    .mat-column-members::before { content: 'Miembros'; }
+    .mat-column-groupName::before { content: 'Grupo'; }
+    .mat-column-role::before { content: 'Rol'; }
+    .mat-column-email::before { content: 'Correo'; }
+    .mat-column-amount::before { content: 'Importe'; }
+    .mat-column-budgetAmount::before { content: 'Presupuesto'; }
+    .mat-column-grossAmount::before { content: 'Importe bruto'; }
+    .mat-column-discountAmount::before { content: 'Descuento'; }
+    .mat-column-discountPercent::before { content: 'Descuento'; }
+    .mat-column-netAmount::before { content: 'Importe neto'; }
+    .mat-column-dueDay::before { content: 'Vencimiento'; }
+    .mat-column-isActive::before { content: 'Estado'; }
+    .mat-column-isPaid::before { content: 'Pagado'; }
+    .mat-column-isRecurring::before { content: 'Recurrente'; }
+
+    .table-footer {
+      position: static;
+      inset: auto;
+      display: block;
+      width: 100%;
+      margin-top: 0;
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--bg-surface);
+      box-sizing: border-box;
+    }
+
+    .mat-mdc-paginator-container {
+      justify-content: center !important;
+      padding: 2px 6px !important;
+      min-height: 40px !important;
+    }
+
+    .mat-mdc-paginator-page-size { display: none !important; }
+    .mat-mdc-paginator-range-label { margin: 0 6px !important; }
+  }
+
+  .table-total-bar {
+    border: 0;
+    border-radius: 0;
+    margin: 0;
+    padding: 12px;
+    gap: 8px;
+
+    .total-pair { gap: 16px; }
+  }
+
+  .cdk-overlay-pane.mat-mdc-dialog-panel {
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+  }
+
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    border-radius: 16px !important;
+  }
+
+  .mat-mdc-dialog-title {
+    font-size: 18px !important;
+    padding: 16px 16px 12px !important;
+  }
+
+  mat-dialog-content {
+    max-height: calc(100dvh - 150px) !important;
+    padding: 4px 16px 16px !important;
+  }
+
+  mat-dialog-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 10px 16px 16px !important;
+
+    button,
+    .mat-mdc-button-base {
+      width: 100%;
+      min-height: calc(30px * var(--ui-scale)) !important;
+      margin: 0 !important;
+    }
+  }
+
+  .dialog-form {
+    gap: 12px;
+
+    input,
+    select {
+      height: calc(30px * var(--ui-scale)) !important;
+      min-height: calc(30px * var(--ui-scale)) !important;
+      font-size: 16px !important;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      font-size: 16px !important;
+      min-height: calc(56px * var(--ui-scale)) !important;
+    }
+
+    .asel__trigger,
+    .mat-mdc-select-trigger {
+      height: calc(30px * var(--ui-scale)) !important;
+      min-height: calc(30px * var(--ui-scale)) !important;
+    }
+  }
+
+  .field > label { font-size: 12px; gap: 5px; }
+
+  .empty-state { padding: 40px 16px; }
+}

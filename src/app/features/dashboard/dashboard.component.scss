@@ -8,6 +8,17 @@
   @media (max-width: 560px) { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 560px) {
+  .stats-grid,
+  .detail-grid {
+    padding-bottom: 32px;
+  }
+
+  .stats-grid:has(+ .section-title) {
+    padding-bottom: 0;
+  }
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

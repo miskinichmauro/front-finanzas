@@ -5,8 +5,9 @@ import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CategoriesService } from '../../core/services/categories.service';
+import { CategoryGroupsService } from '../../core/services/category-groups.service';
 import { AppSelectComponent } from '../../shared/components/app-select/app-select.component';
-import { CategoryDto } from '../../core/models';
+import { CategoryDto, CategoryGroupDto } from '../../core/models';
 
 @Component({
   selector: 'app-category-form-dialog',
@@ -23,27 +24,32 @@ import { CategoryDto } from '../../core/models';
 export class CategoryFormDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private categoriesService = inject(CategoriesService);
+  private groupsService = inject(CategoryGroupsService);
   private dialogRef = inject(MatDialogRef<CategoryFormDialogComponent>);
   private snackBar = inject(MatSnackBar);
   data = inject<CategoryDto | null>(MAT_DIALOG_DATA);
 
-  categories: CategoryDto[] = null as any;
+  groups: CategoryGroupDto[] = [];
 
   form = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
-    parentCategoryId: [null as string | null]
+    groupId: ['', Validators.required]
   });
 
   get isEdit(): boolean { return !!this.data; }
 
   ngOnInit(): void {
-    this.categoriesService.getAll().subscribe(cats => {
-      this.categories = cats.filter(c => c.id !== this.data?.id);
+    this.groupsService.getAll().subscribe(groups => {
+      this.groups = groups;
+      if (!this.data) {
+        const defaultGroup = groups.find(g => g.isDefault);
+        if (defaultGroup) this.form.patchValue({ groupId: defaultGroup.id });
+      }
     });
     if (this.data) {
       this.form.patchValue({
         name: this.data.name,
-        parentCategoryId: this.data.parentCategoryId
+        groupId: this.data.groupId
       });
     }
   }
@@ -56,7 +62,7 @@ export class CategoryFormDialogComponent implements OnInit {
     const value = this.form.value;
     const dto = {
       name: value.name!,
-      parentCategoryId: value.parentCategoryId || undefined
+      groupId: value.groupId!
     };
 
     if (this.isEdit) {

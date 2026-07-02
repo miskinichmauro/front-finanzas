@@ -1,8 +1,17 @@
 export interface CategoryDto {
   id: string;
   name: string;
-  parentCategoryId: string | null;
+  groupId: string;
+  groupName: string;
 }
+
+export interface CategoryGroupDto {
+  id: string;
+  name: string;
+  isDefault: boolean;
+}
+
+export interface SaveCategoryGroupDto { name: string; }
 
 export interface CategoryTreeDto {
   id: string;
@@ -12,10 +21,10 @@ export interface CategoryTreeDto {
 
 export interface CreateCategoryDto {
   name: string;
-  parentCategoryId?: string;
+  groupId: string;
 }
 
 export interface UpdateCategoryDto {
   name: string;
-  parentCategoryId?: string;
+  groupId: string;
 }

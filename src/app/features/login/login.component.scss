@@ -402,6 +402,44 @@ button.login-btn.mdc-button {
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
 }
 
+@media (max-width: 768px) {
+  .login-tabs {
+    margin-bottom: 18px;
+  }
+
+  .login-form {
+    gap: 9px;
+  }
+
+  .field-label {
+    margin-bottom: 5px;
+    font-size: 12px;
+  }
+
+  .login-form .field > input,
+  .pass-wrapper {
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .login-form .field > input,
+  .pass-wrapper input {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .login-btn,
+  button.login-btn.mat-mdc-unelevated-button,
+  button.login-btn.mat-mdc-raised-button,
+  button.login-btn.mdc-button {
+    height: 34px;
+    min-height: 34px !important;
+    margin: 4px 0 0 !important;
+    border-radius: 8px !important;
+    font-size: 13px;
+  }
+}
+
 .pass-wrapper--invalid {
   border-color: #ef4444 !important;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
