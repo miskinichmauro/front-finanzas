@@ -16,7 +16,7 @@ export interface PeriodExpenseDto {
 
 export interface CreatePeriodExpenseDto {
   userId: string;
-  categoryId?: string;
+  categoryId: string;
   paymentMethodId?: string;
   description: string;
   amount: number;
@@ -28,7 +28,7 @@ export interface CreatePeriodExpenseDto {
 
 export interface UpdatePeriodExpenseDto {
   userId: string;
-  categoryId?: string;
+  categoryId: string;
   paymentMethodId?: string;
   description: string;
   amount: number;

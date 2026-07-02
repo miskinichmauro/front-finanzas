@@ -11,7 +11,7 @@ export interface IncomeDto {
 
 export interface CreateIncomeDto {
   userId: string;
-  categoryId?: string;
+  categoryId: string;
   description: string;
   amount: number;
   date: string;
@@ -20,7 +20,7 @@ export interface CreateIncomeDto {
 
 export interface UpdateIncomeDto {
   userId: string;
-  categoryId?: string;
+  categoryId: string;
   description: string;
   amount: number;
   date: string;

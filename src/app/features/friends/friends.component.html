@@ -14,16 +14,14 @@
     <button class="mobile-tab" [class.active]="mobileTab() === 'friends'" (click)="mobileTab.set('friends')">
       <mat-icon>people</mat-icon>
       <span>Amigos</span>
-      @if (friends().length > 0) {
-        <span class="tab-badge">{{ friends().length }}</span>
-      }
+      <span class="tab-badge">{{ friends().length }}</span>
     </button>
     <button class="mobile-tab" [class.active]="mobileTab() === 'requests'" (click)="mobileTab.set('requests')">
       <mat-icon>mail_outline</mat-icon>
       <span>Solicitudes</span>
-      @if (pendingRequests().length > 0) {
-        <span class="tab-badge tab-badge--alert">{{ pendingRequests().length }}</span>
-      }
+      <span class="tab-badge" [class.tab-badge--alert]="pendingRequests().length > 0">
+        {{ pendingRequests().length }}
+      </span>
     </button>
     <button class="mobile-tab" [class.active]="mobileTab() === 'search'" (click)="mobileTab.set('search')">
       <mat-icon>person_add</mat-icon>
